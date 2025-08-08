@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nettoyage du Stockage - FLASHXSHIP</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .button {
+            background: #d32f2f;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px;
+            font-size: 16px;
+        }
+        .button:hover {
+            background: #b71c1c;
+        }
+        .button.warning {
+            background: #ff9800;
+        }
+        .button.warning:hover {
+            background: #f57c00;
+        }
+        .button.info {
+            background: #2196f3;
+        }
+        .button.info:hover {
+            background: #1976d2;
+        }
+        .alert {
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+        .alert-info {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            color: #1976d2;
+        }
+        .alert-success {
+            background: #e8f5e8;
+            border: 1px solid #4caf50;
+            color: #2e7d32;
+        }
+        .alert-warning {
+            background: #fff3e0;
+            border: 1px solid #ff9800;
+            color: #f57c00;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Nettoyage du Stockage - FLASHXSHIP</h1>
+        
+        <div class="alert alert-info">
+            <strong>Problème :</strong> Vous avez réinitialisé la base de données mais vous voyez encore des données 
+            (utilisateur connecté, panier, etc.) car elles sont stockées dans le navigateur.
+        </div>
+
+        <h2>Actions disponibles :</h2>
+        
+        <button class="button info" onclick="checkStorage()">
+            🔍 Vérifier le stockage actuel
+        </button>
+        
+        <button class="button warning" onclick="clearAppData()">
+            🧹 Nettoyer données de l'application
+        </button>
+        
+        <button class="button" onclick="clearAllStorage()">
+            💥 Nettoyer TOUT le stockage
+        </button>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        function checkStorage() {
+            const results = document.getElementById('results');
+            const localStorageData = {};
+            const sessionStorageData = {};
+            
+            // Récupérer les données localStorage
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key) {
+                    localStorageData[key] = localStorage.getItem(key);
+                }
+            }
+            
+            // Récupérer les données sessionStorage
+            for (let i = 0; i < sessionStorage.length; i++) {
+                const key = sessionStorage.key(i);
+                if (key) {
+                    sessionStorageData[key] = sessionStorage.getItem(key);
+                }
+            }
+            
+            results.innerHTML = `
+                <div class="alert alert-info">
+                    <h3>📊 Données actuelles :</h3>
+                    <p><strong>localStorage :</strong> ${Object.keys(localStorageData).length} éléments</p>
+                    <p><strong>sessionStorage :</strong> ${Object.keys(sessionStorageData).length} éléments</p>
+                    
+                    <h4>localStorage :</h4>
+                    <pre>${JSON.stringify(localStorageData, null, 2)}</pre>
+                    
+                    <h4>sessionStorage :</h4>
+                    <pre>${JSON.stringify(sessionStorageData, null, 2)}</pre>
+                </div>
+            `;
+        }
+
+        function clearAppData() {
+            // Clés spécifiques à l'application
+            const appKeys = [
+                'cart',
+                'user',
+                'authToken',
+                'sessionid',
+                'csrftoken'
+            ];
+            
+            appKeys.forEach(key => {
+                localStorage.removeItem(key);
+                sessionStorage.removeItem(key);
+            });
+            
+            document.getElementById('results').innerHTML = `
+                <div class="alert alert-success">
+                    ✅ Données de l'application nettoyées !
+                    <br><br>
+                    <strong>Clés supprimées :</strong> ${appKeys.join(', ')}
+                </div>
+            `;
+        }
+
+        function clearAllStorage() {
+            // Nettoyer le localStorage
+            localStorage.clear();
+            
+            // Nettoyer les cookies de session
+            document.cookie.split(";").forEach((c) => {
+                document.cookie = c
+                    .replace(/^ +/, "")
+                    .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+            });
+            
+            // Nettoyer sessionStorage
+            sessionStorage.clear();
+            
+            document.getElementById('results').innerHTML = `
+                <div class="alert alert-success">
+                    ✅ Tous les stockages locaux ont été nettoyés !
+                    <br><br>
+                    <strong>Actions effectuées :</strong>
+                    <ul>
+                        <li>localStorage vidé</li>
+                        <li>sessionStorage vidé</li>
+                        <li>Cookies de session supprimés</li>
+                    </ul>
+                    <br>
+                    <strong>Recommandation :</strong> Rechargez la page de votre application maintenant.
+                </div>
+            `;
+        }
+
+        // Vérifier automatiquement au chargement
+        window.onload = function() {
+            checkStorage();
+        };
+    </script>
+</body>
+</html> 

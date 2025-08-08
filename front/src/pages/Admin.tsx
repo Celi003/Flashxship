@@ -1,0 +1,1648 @@
+import React, { useState } from 'react';
+import {
+  Box,
+  Container,
+  Typography,
+  Grid,
+  Card,
+  CardContent,
+  CardActions,
+  Button,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Chip,
+  Alert,
+  useTheme,
+  Tabs,
+  Tab,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemSecondaryAction,
+  IconButton,
+  Divider,
+  Input,
+  FormHelperText,
+  Snackbar,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  DialogContentText,
+  Tooltip
+} from '@mui/material';
+import {
+  Add as AddIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  Build as EquipmentIcon,
+  ShoppingCart as ProductIcon,
+  Category as CategoryIcon,
+  Visibility as ViewIcon,
+  CheckCircle as CheckIcon,
+  Cancel as CancelIcon,
+  LocalShipping as ShipIcon,
+  DeliveryDining as DeliverIcon,
+  Reply as ReplyIcon
+} from '@mui/icons-material';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
+import { 
+  productService, 
+  productCategoryService, 
+  equipmentService, 
+  equipmentCategoryService,
+  orderService,
+  contactService
+} from '../services/api';
+import { Product, ProductCategory, Equipment, EquipmentCategory, Order, ContactMessage } from '../types';
+import toast from 'react-hot-toast';
+
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`admin-tabpanel-${index}`}
+      aria-labelledby={`admin-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+    </div>
+  );
+}
+
+const Admin: React.FC = () => {
+  const theme = useTheme();
+  const queryClient = useQueryClient();
+  const [tabValue, setTabValue] = useState(0);
+  const [openProductCategoryDialog, setOpenProductCategoryDialog] = useState(false);
+  const [openEquipmentCategoryDialog, setOpenEquipmentCategoryDialog] = useState(false);
+  const [openProductDialog, setOpenProductDialog] = useState(false);
+  const [openEquipmentDialog, setOpenEquipmentDialog] = useState(false);
+  
+  // Form states
+  const [productCategoryForm, setProductCategoryForm] = useState({ name: '', description: '' });
+  const [equipmentCategoryForm, setEquipmentCategoryForm] = useState({ name: '', description: '' });
+  const [productForm, setProductForm] = useState({
+    name: '',
+    description: '',
+    price: '',
+    stock: '',
+    category: '',
+    image: null as File | null
+  });
+  const [equipmentForm, setEquipmentForm] = useState({
+    name: '',
+    description: '',
+    rental_price_per_day: '',
+    category: '',
+    image: null as File | null
+  });
+
+  // États pour l'édition
+  const [editingProductCategory, setEditingProductCategory] = useState<ProductCategory | null>(null);
+  const [editingEquipmentCategory, setEditingEquipmentCategory] = useState<EquipmentCategory | null>(null);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editingEquipment, setEditingEquipment] = useState<Equipment | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<{ type: string; id: number; name: string } | null>(null);
+
+  // Fetch data
+  const { data: productCategoriesResponse } = useQuery({
+    queryKey: ['product-categories'],
+    queryFn: productCategoryService.getAll
+  });
+
+  const { data: equipmentCategoriesResponse } = useQuery({
+    queryKey: ['equipment-categories'],
+    queryFn: equipmentCategoryService.getAll
+  });
+
+  const { data: productsResponse } = useQuery({
+    queryKey: ['products'],
+    queryFn: productService.getAll
+  });
+
+  const { data: equipmentResponse } = useQuery({
+    queryKey: ['equipment'],
+    queryFn: equipmentService.getAll
+  });
+
+  // Extract arrays from responses
+  const productCategories = productCategoriesResponse?.results || [];
+  const equipmentCategories = equipmentCategoriesResponse?.results || [];
+  const products = Array.isArray(productsResponse) ? productsResponse : (productsResponse as any)?.results || [];
+  const equipment = Array.isArray(equipmentResponse) ? equipmentResponse : (equipmentResponse as any)?.results || [];
+
+  // Mutations
+  const createProductCategoryMutation = useMutation({
+    mutationFn: (data: { name: string; description: string }) => {
+      const formData = new FormData();
+      formData.append('name', data.name);
+      formData.append('description', data.description);
+      return productCategoryService.create(formData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['product-categories'] });
+      setOpenProductCategoryDialog(false);
+      setProductCategoryForm({ name: '', description: '' });
+      toast.success('Catégorie de produit créée avec succès');
+    },
+    onError: () => {
+      toast.error('Erreur lors de la création de la catégorie');
+    }
+  });
+
+  const createEquipmentCategoryMutation = useMutation({
+    mutationFn: (data: { name: string; description: string }) => {
+      const formData = new FormData();
+      formData.append('name', data.name);
+      formData.append('description', data.description);
+      return equipmentCategoryService.create(formData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['equipment-categories'] });
+      setOpenEquipmentCategoryDialog(false);
+      setEquipmentCategoryForm({ name: '', description: '' });
+      toast.success('Catégorie d\'équipement créée avec succès');
+    },
+    onError: () => {
+      toast.error('Erreur lors de la création de la catégorie');
+    }
+  });
+
+  const createProductMutation = useMutation({
+    mutationFn: (data: any) => {
+      const formData = new FormData();
+      formData.append('name', data.name);
+      formData.append('description', data.description);
+      formData.append('price', data.price.toString());
+      formData.append('stock', data.stock.toString());
+      formData.append('category_id', data.category.toString());
+      if (data.image) {
+        formData.append('image_files', data.image);
+      }
+      return productService.create(formData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      setOpenProductDialog(false);
+      setProductForm({ name: '', description: '', price: '', stock: '', category: '', image: null });
+      toast.success('Produit créé avec succès');
+    },
+    onError: () => {
+      toast.error('Erreur lors de la création du produit');
+    }
+  });
+
+  const createEquipmentMutation = useMutation({
+    mutationFn: (data: any) => {
+      const formData = new FormData();
+      formData.append('name', data.name);
+      formData.append('description', data.description);
+      formData.append('rental_price_per_day', data.rental_price_per_day.toString());
+      formData.append('category_id', data.category.toString());
+      formData.append('available', 'true');
+      if (data.image) {
+        formData.append('image_files', data.image);
+      }
+      return equipmentService.create(formData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['equipment'] });
+      setOpenEquipmentDialog(false);
+      setEquipmentForm({ name: '', description: '', rental_price_per_day: '', category: '', image: null });
+      toast.success('Équipement créé avec succès');
+    },
+    onError: () => {
+      toast.error('Erreur lors de la création de l\'équipement');
+    }
+  });
+
+  // Mutations pour la modification
+  const updateProductCategoryMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: FormData }) => productCategoryService.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['productCategories'] });
+      setEditingProductCategory(null);
+      toast.success('Catégorie de produit modifiée avec succès');
+    },
+    onError: (error) => {
+      toast.error('Erreur lors de la modification de la catégorie');
+      console.error('Erreur modification catégorie produit:', error);
+    }
+  });
+
+  const updateEquipmentCategoryMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: FormData }) => equipmentCategoryService.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['equipmentCategories'] });
+      setEditingEquipmentCategory(null);
+      toast.success('Catégorie d\'équipement modifiée avec succès');
+    },
+    onError: (error) => {
+      toast.error('Erreur lors de la modification de la catégorie');
+      console.error('Erreur modification catégorie équipement:', error);
+    }
+  });
+
+  const updateProductMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: FormData }) => productService.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      setEditingProduct(null);
+      toast.success('Produit modifié avec succès');
+    },
+    onError: (error) => {
+      toast.error('Erreur lors de la modification du produit');
+      console.error('Erreur modification produit:', error);
+    }
+  });
+
+  const updateEquipmentMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: FormData }) => equipmentService.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['equipment'] });
+      setEditingEquipment(null);
+      toast.success('Équipement modifié avec succès');
+    },
+    onError: (error) => {
+      toast.error('Erreur lors de la modification de l\'équipement');
+      console.error('Erreur modification équipement:', error);
+    }
+  });
+
+  // Mutations pour la suppression
+  const deleteProductCategoryMutation = useMutation({
+    mutationFn: (id: number) => productCategoryService.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['productCategories'] });
+      setDeleteDialogOpen(false);
+      setItemToDelete(null);
+      toast.success('Catégorie de produit supprimée avec succès');
+    },
+    onError: (error) => {
+      toast.error('Erreur lors de la suppression de la catégorie');
+      console.error('Erreur suppression catégorie produit:', error);
+    }
+  });
+
+  const deleteEquipmentCategoryMutation = useMutation({
+    mutationFn: (id: number) => equipmentCategoryService.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['equipmentCategories'] });
+      setDeleteDialogOpen(false);
+      setItemToDelete(null);
+      toast.success('Catégorie d\'équipement supprimée avec succès');
+    },
+    onError: (error) => {
+      toast.error('Erreur lors de la suppression de la catégorie');
+      console.error('Erreur suppression catégorie équipement:', error);
+    }
+  });
+
+  const deleteProductMutation = useMutation({
+    mutationFn: (id: number) => productService.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      setDeleteDialogOpen(false);
+      setItemToDelete(null);
+      toast.success('Produit supprimé avec succès');
+    },
+    onError: (error) => {
+      toast.error('Erreur lors de la suppression du produit');
+      console.error('Erreur suppression produit:', error);
+    }
+  });
+
+  const deleteEquipmentMutation = useMutation({
+    mutationFn: (id: number) => equipmentService.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['equipment'] });
+      setDeleteDialogOpen(false);
+      setItemToDelete(null);
+      toast.success('Équipement supprimé avec succès');
+    },
+    onError: (error) => {
+      toast.error('Erreur lors de la suppression de l\'équipement');
+      console.error('Erreur suppression équipement:', error);
+    }
+  });
+
+  // Fonctions pour gérer l'édition
+  const handleEditProductCategory = (category: ProductCategory) => {
+    setEditingProductCategory(category);
+    setProductCategoryForm({ name: category.name, description: category.description });
+  };
+
+  const handleEditEquipmentCategory = (category: EquipmentCategory) => {
+    setEditingEquipmentCategory(category);
+    setEquipmentCategoryForm({ name: category.name, description: category.description });
+  };
+
+  const handleEditProduct = (product: Product) => {
+    setEditingProduct(product);
+    setProductForm({
+      name: product.name,
+      description: product.description,
+      price: product.price.toString(),
+      stock: product.stock.toString(),
+      category: product.category.id.toString(),
+      image: null
+    });
+  };
+
+  const handleEditEquipment = (equipment: Equipment) => {
+    setEditingEquipment(equipment);
+    setEquipmentForm({
+      name: equipment.name,
+      description: equipment.description,
+      rental_price_per_day: equipment.rental_price_per_day.toString(),
+      category: equipment.category.id.toString(),
+      image: null
+    });
+  };
+
+  // Fonctions pour gérer la suppression
+  const handleDeleteClick = (type: string, id: number, name: string) => {
+    setItemToDelete({ type, id, name });
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!itemToDelete) return;
+
+    switch (itemToDelete.type) {
+      case 'productCategory':
+        deleteProductCategoryMutation.mutate(itemToDelete.id);
+        break;
+      case 'equipmentCategory':
+        deleteEquipmentCategoryMutation.mutate(itemToDelete.id);
+        break;
+      case 'product':
+        deleteProductMutation.mutate(itemToDelete.id);
+        break;
+      case 'equipment':
+        deleteEquipmentMutation.mutate(itemToDelete.id);
+        break;
+    }
+  };
+
+  // Fonctions pour soumettre les modifications
+  const handleUpdateProductCategory = () => {
+    if (!editingProductCategory) return;
+    
+    const formData = new FormData();
+    formData.append('name', productCategoryForm.name);
+    formData.append('description', productCategoryForm.description);
+    
+    updateProductCategoryMutation.mutate({ id: editingProductCategory.id, data: formData });
+  };
+
+  const handleUpdateEquipmentCategory = () => {
+    if (!editingEquipmentCategory) return;
+    
+    const formData = new FormData();
+    formData.append('name', equipmentCategoryForm.name);
+    formData.append('description', equipmentCategoryForm.description);
+    
+    updateEquipmentCategoryMutation.mutate({ id: editingEquipmentCategory.id, data: formData });
+  };
+
+  const handleUpdateProduct = () => {
+    if (!editingProduct) return;
+    
+    const formData = new FormData();
+    formData.append('name', productForm.name);
+    formData.append('description', productForm.description);
+    formData.append('price', productForm.price);
+    formData.append('stock', productForm.stock);
+    formData.append('category_id', productForm.category);
+    if (productForm.image) {
+      formData.append('image_files', productForm.image);
+    }
+    
+    updateProductMutation.mutate({ id: editingProduct.id, data: formData });
+  };
+
+  const handleUpdateEquipment = () => {
+    if (!editingEquipment) return;
+    
+    const formData = new FormData();
+    formData.append('name', equipmentForm.name);
+    formData.append('description', equipmentForm.description);
+    formData.append('rental_price_per_day', equipmentForm.rental_price_per_day);
+    formData.append('category_id', equipmentForm.category);
+    if (equipmentForm.image) {
+      formData.append('image_files', equipmentForm.image);
+    }
+    
+    updateEquipmentMutation.mutate({ id: editingEquipment.id, data: formData });
+  };
+
+  // Fonction pour réinitialiser les formulaires
+  const resetForms = () => {
+    setProductCategoryForm({ name: '', description: '' });
+    setEquipmentCategoryForm({ name: '', description: '' });
+    setProductForm({ name: '', description: '', price: '', stock: '', category: '', image: null });
+    setEquipmentForm({ name: '', description: '', rental_price_per_day: '', category: '', image: null });
+  };
+
+  // Fonctions pour annuler l'édition
+  const handleCancelEdit = () => {
+    setEditingProductCategory(null);
+    setEditingEquipmentCategory(null);
+    setEditingProduct(null);
+    setEditingEquipment(null);
+    resetForms();
+  };
+
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
+  };
+
+  const handleCreateProductCategory = () => {
+    if (!productCategoryForm.name.trim()) {
+      toast.error('Le nom de la catégorie est requis');
+      return;
+    }
+    createProductCategoryMutation.mutate(productCategoryForm);
+  };
+
+  const handleCreateEquipmentCategory = () => {
+    if (!equipmentCategoryForm.name.trim()) {
+      toast.error('Le nom de la catégorie est requis');
+      return;
+    }
+    createEquipmentCategoryMutation.mutate(equipmentCategoryForm);
+  };
+
+  const handleCreateProduct = () => {
+    if (!productForm.name.trim() || !productForm.price || !productForm.category) {
+      toast.error('Veuillez remplir tous les champs obligatoires');
+      return;
+    }
+    const productData = {
+      ...productForm,
+      price: parseFloat(productForm.price),
+      stock: parseInt(productForm.stock) || 0,
+      category: parseInt(productForm.category)
+    };
+    createProductMutation.mutate(productData);
+  };
+
+  const handleCreateEquipment = () => {
+    if (!equipmentForm.name.trim() || !equipmentForm.rental_price_per_day || !equipmentForm.category) {
+      toast.error('Veuillez remplir tous les champs obligatoires');
+      return;
+    }
+    const equipmentData = {
+      ...equipmentForm,
+      rental_price_per_day: parseFloat(equipmentForm.rental_price_per_day),
+      category: parseInt(equipmentForm.category),
+      available: true
+    };
+    createEquipmentMutation.mutate(equipmentData);
+  };
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 0
+    }).format(price);
+  };
+
+  return (
+    <Container maxWidth="xl" sx={{ py: 4 }}>
+      {/* Header */}
+      <Box sx={{ mb: 4 }}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <Typography variant="h3" component="h1" sx={{ mb: 2, fontWeight: 700 }}>
+            Administration
+          </Typography>
+          <Typography variant="h6" color="text.secondary">
+            Gérez vos produits, équipements et catégories
+          </Typography>
+        </motion.div>
+      </Box>
+
+      {/* Tabs */}
+      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Tabs value={tabValue} onChange={handleTabChange} aria-label="admin tabs">
+          <Tab label="Catégories Produits" />
+          <Tab label="Catégories Équipements" />
+          <Tab label="Produits" />
+          <Tab label="Équipements" />
+          <Tab label="Commandes" />
+          <Tab label="Contacts" />
+        </Tabs>
+      </Box>
+
+      {/* Product Categories Tab */}
+      <TabPanel value={tabValue} index={0}>
+        <Box sx={{ mb: 3 }}>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setOpenProductCategoryDialog(true)}
+          >
+            Ajouter une catégorie de produit
+          </Button>
+        </Box>
+        
+        <Grid container spacing={3}>
+          {Array.isArray(productCategories) && productCategories.map((category: any) => (
+            <Grid item xs={12} sm={6} md={4} key={category.id}>
+              <Card>
+                <CardContent>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        {category.name}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {category.description}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Tooltip title="Modifier">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleEditProductCategory(category)}
+                          color="primary"
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Supprimer">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleDeleteClick('productCategory', category.id, category.name)}
+                          color="error"
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      </TabPanel>
+
+      {/* Equipment Categories Tab */}
+      <TabPanel value={tabValue} index={1}>
+        <Box sx={{ mb: 3 }}>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setOpenEquipmentCategoryDialog(true)}
+          >
+            Ajouter une catégorie d'équipement
+          </Button>
+        </Box>
+        
+        <Grid container spacing={3}>
+          {Array.isArray(equipmentCategories) && equipmentCategories.map((category: any) => (
+            <Grid item xs={12} sm={6} md={4} key={category.id}>
+              <Card>
+                <CardContent>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        {category.name}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {category.description}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Tooltip title="Modifier">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleEditEquipmentCategory(category)}
+                          color="primary"
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Supprimer">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleDeleteClick('equipmentCategory', category.id, category.name)}
+                          color="error"
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      </TabPanel>
+
+      {/* Products Tab */}
+      <TabPanel value={tabValue} index={2}>
+        <Box sx={{ mb: 3 }}>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setOpenProductDialog(true)}
+          >
+            Ajouter un produit
+          </Button>
+        </Box>
+        
+        <Grid container spacing={3}>
+          {Array.isArray(products) && products.map((product: any) => (
+            <Grid item xs={12} sm={6} md={4} key={product.id}>
+              <Card>
+                <CardContent>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        {product.name}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                        {product.description}
+                      </Typography>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Typography variant="h6" color="primary">
+                          {formatPrice(product.price)}
+                        </Typography>
+                        <Chip label={`Stock: ${product.stock}`} size="small" />
+                      </Box>
+                    </Box>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Tooltip title="Modifier">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleEditProduct(product)}
+                          color="primary"
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Supprimer">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleDeleteClick('product', product.id, product.name)}
+                          color="error"
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      </TabPanel>
+
+             {/* Equipment Tab */}
+       <TabPanel value={tabValue} index={3}>
+         <Box sx={{ mb: 3 }}>
+           <Button
+             variant="contained"
+             startIcon={<AddIcon />}
+             onClick={() => setOpenEquipmentDialog(true)}
+           >
+             Ajouter un équipement
+           </Button>
+         </Box>
+         
+         <Grid container spacing={3}>
+           {Array.isArray(equipment) && equipment.map((equip: any) => (
+             <Grid item xs={12} sm={6} md={4} key={equip.id}>
+               <Card>
+                 <CardContent>
+                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                     <Box sx={{ flex: 1 }}>
+                       <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                         {equip.name}
+                       </Typography>
+                       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                         {equip.description}
+                       </Typography>
+                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                         <Typography variant="h6" color="primary">
+                           {formatPrice(equip.rental_price_per_day)}/jour
+                         </Typography>
+                         <Chip 
+                           label={equip.available ? 'Disponible' : 'Indisponible'} 
+                           color={equip.available ? 'success' : 'error'}
+                           size="small"
+                         />
+                       </Box>
+                     </Box>
+                     <Box sx={{ display: 'flex', gap: 1 }}>
+                       <Tooltip title="Modifier">
+                         <IconButton
+                           size="small"
+                           onClick={() => handleEditEquipment(equip)}
+                           color="primary"
+                         >
+                           <EditIcon />
+                         </IconButton>
+                       </Tooltip>
+                       <Tooltip title="Supprimer">
+                         <IconButton
+                           size="small"
+                           onClick={() => handleDeleteClick('equipment', equip.id, equip.name)}
+                           color="error"
+                         >
+                           <DeleteIcon />
+                         </IconButton>
+                       </Tooltip>
+                     </Box>
+                   </Box>
+                 </CardContent>
+               </Card>
+             </Grid>
+           ))}
+         </Grid>
+       </TabPanel>
+
+       {/* Orders Tab */}
+       <TabPanel value={tabValue} index={4}>
+         <Box sx={{ mb: 3 }}>
+           <Typography variant="h5" sx={{ fontWeight: 600, mb: 2 }}>
+             Gestion des Commandes
+           </Typography>
+         </Box>
+         
+         <Grid container spacing={3}>
+           <Grid item xs={12}>
+             <Card>
+               <CardContent>
+                 <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                   Commandes en cours
+                 </Typography>
+                 <List>
+                   <ListItem>
+                     <ListItemText
+                       primary="Commande #1234"
+                       secondary="Client: Jean Dupont - Total: 150€ - Statut: En cours"
+                     />
+                     <ListItemSecondaryAction>
+                       <IconButton edge="end" aria-label="edit">
+                         <EditIcon />
+                       </IconButton>
+                     </ListItemSecondaryAction>
+                   </ListItem>
+                   <Divider />
+                   <ListItem>
+                     <ListItemText
+                       primary="Commande #1235"
+                       secondary="Client: Marie Martin - Total: 89€ - Statut: En cours"
+                     />
+                     <ListItemSecondaryAction>
+                       <IconButton edge="end" aria-label="edit">
+                         <EditIcon />
+                       </IconButton>
+                     </ListItemSecondaryAction>
+                   </ListItem>
+                 </List>
+               </CardContent>
+             </Card>
+           </Grid>
+         </Grid>
+       </TabPanel>
+
+       {/* Contacts Tab */}
+       <TabPanel value={tabValue} index={5}>
+         <Box sx={{ mb: 3 }}>
+           <Typography variant="h5" sx={{ fontWeight: 600, mb: 2 }}>
+             Messages de Contact
+           </Typography>
+         </Box>
+         
+         <Grid container spacing={3}>
+           <Grid item xs={12}>
+             <Card>
+               <CardContent>
+                 <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                   Messages récents
+                 </Typography>
+                 <List>
+                   <ListItem>
+                     <ListItemText
+                       primary="Demande de devis"
+                       secondary="De: contact@entreprise.com - Sujet: Location d'équipements pour chantier"
+                     />
+                     <ListItemSecondaryAction>
+                       <IconButton edge="end" aria-label="view">
+                         <EditIcon />
+                       </IconButton>
+                     </ListItemSecondaryAction>
+                   </ListItem>
+                   <Divider />
+                   <ListItem>
+                     <ListItemText
+                       primary="Question technique"
+                       secondary="De: technicien@pro.com - Sujet: Spécifications mini-pelle"
+                     />
+                     <ListItemSecondaryAction>
+                       <IconButton edge="end" aria-label="view">
+                         <EditIcon />
+                       </IconButton>
+                     </ListItemSecondaryAction>
+                   </ListItem>
+                 </List>
+               </CardContent>
+             </Card>
+           </Grid>
+         </Grid>
+       </TabPanel>
+
+      {/* Product Category Dialog */}
+      <Dialog open={openProductCategoryDialog} onClose={() => setOpenProductCategoryDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Ajouter une catégorie de produit</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            <TextField
+              fullWidth
+              label="Nom de la catégorie"
+              value={productCategoryForm.name}
+              onChange={(e) => setProductCategoryForm({ ...productCategoryForm, name: e.target.value })}
+              sx={{ mb: 2 }}
+              required
+            />
+            <TextField
+              fullWidth
+              label="Description"
+              multiline
+              rows={3}
+              value={productCategoryForm.description}
+              onChange={(e) => setProductCategoryForm({ ...productCategoryForm, description: e.target.value })}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenProductCategoryDialog(false)}>Annuler</Button>
+          <Button 
+            variant="contained" 
+            onClick={handleCreateProductCategory}
+            disabled={createProductCategoryMutation.isPending}
+          >
+            {createProductCategoryMutation.isPending ? 'Création...' : 'Créer'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Equipment Category Dialog */}
+      <Dialog open={openEquipmentCategoryDialog} onClose={() => setOpenEquipmentCategoryDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Ajouter une catégorie d'équipement</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            <TextField
+              fullWidth
+              label="Nom de la catégorie"
+              value={equipmentCategoryForm.name}
+              onChange={(e) => setEquipmentCategoryForm({ ...equipmentCategoryForm, name: e.target.value })}
+              sx={{ mb: 2 }}
+              required
+            />
+            <TextField
+              fullWidth
+              label="Description"
+              multiline
+              rows={3}
+              value={equipmentCategoryForm.description}
+              onChange={(e) => setEquipmentCategoryForm({ ...equipmentCategoryForm, description: e.target.value })}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenEquipmentCategoryDialog(false)}>Annuler</Button>
+          <Button 
+            variant="contained" 
+            onClick={handleCreateEquipmentCategory}
+            disabled={createEquipmentCategoryMutation.isPending}
+          >
+            {createEquipmentCategoryMutation.isPending ? 'Création...' : 'Créer'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Product Dialog */}
+      <Dialog open={openProductDialog} onClose={() => setOpenProductDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Ajouter un produit</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            <TextField
+              fullWidth
+              label="Nom du produit"
+              value={productForm.name}
+              onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
+              sx={{ mb: 2 }}
+              required
+            />
+            <TextField
+              fullWidth
+              label="Description"
+              multiline
+              rows={3}
+              value={productForm.description}
+              onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
+              sx={{ mb: 2 }}
+            />
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <TextField
+                  fullWidth
+                  label="Prix"
+                  type="number"
+                  value={productForm.price}
+                  onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
+                  required
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  fullWidth
+                  label="Stock"
+                  type="number"
+                  value={productForm.stock}
+                  onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })}
+                />
+              </Grid>
+            </Grid>
+            <FormControl fullWidth sx={{ mt: 2 }}>
+              <InputLabel>Catégorie</InputLabel>
+              <Select
+                value={productForm.category}
+                label="Catégorie"
+                onChange={(e) => setProductForm({ ...productForm, category: e.target.value })}
+                required
+              >
+                {Array.isArray(productCategories) && productCategories.map((category: any) => (
+                  <MenuItem key={category.id} value={category.id}>
+                    {category.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Box sx={{ mt: 2 }}>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = (e.target as HTMLInputElement).files?.[0];
+                  setProductForm({ ...productForm, image: file || null });
+                }}
+                style={{ marginBottom: '8px' }}
+              />
+              <Typography variant="caption" color="text.secondary">
+                Format accepté: JPG, PNG, GIF (max 5MB)
+              </Typography>
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenProductDialog(false)}>Annuler</Button>
+          <Button 
+            variant="contained" 
+            onClick={handleCreateProduct}
+            disabled={createProductMutation.isPending}
+          >
+            {createProductMutation.isPending ? 'Création...' : 'Créer'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Equipment Dialog */}
+      <Dialog open={openEquipmentDialog} onClose={() => setOpenEquipmentDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Ajouter un équipement</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            <TextField
+              fullWidth
+              label="Nom de l'équipement"
+              value={equipmentForm.name}
+              onChange={(e) => setEquipmentForm({ ...equipmentForm, name: e.target.value })}
+              sx={{ mb: 2 }}
+              required
+            />
+            <TextField
+              fullWidth
+              label="Description"
+              multiline
+              rows={3}
+              value={equipmentForm.description}
+              onChange={(e) => setEquipmentForm({ ...equipmentForm, description: e.target.value })}
+              sx={{ mb: 2 }}
+            />
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <TextField
+                  fullWidth
+                  label="Prix de location par jour"
+                  type="number"
+                  value={equipmentForm.rental_price_per_day}
+                  onChange={(e) => setEquipmentForm({ ...equipmentForm, rental_price_per_day: e.target.value })}
+                  required
+                />
+              </Grid>
+            </Grid>
+            <FormControl fullWidth sx={{ mt: 2 }}>
+              <InputLabel>Catégorie</InputLabel>
+              <Select
+                value={equipmentForm.category}
+                label="Catégorie"
+                onChange={(e) => setEquipmentForm({ ...equipmentForm, category: e.target.value })}
+                required
+              >
+                {Array.isArray(equipmentCategories) && equipmentCategories.map((category: any) => (
+                  <MenuItem key={category.id} value={category.id}>
+                    {category.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Box sx={{ mt: 2 }}>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = (e.target as HTMLInputElement).files?.[0];
+                  setEquipmentForm({ ...equipmentForm, image: file || null });
+                }}
+                style={{ marginBottom: '8px' }}
+              />
+              <Typography variant="caption" color="text.secondary">
+                Format accepté: JPG, PNG, GIF (max 5MB)
+              </Typography>
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenEquipmentDialog(false)}>Annuler</Button>
+          <Button 
+            variant="contained" 
+            onClick={handleCreateEquipment}
+            disabled={createEquipmentMutation.isPending}
+          >
+            {createEquipmentMutation.isPending ? 'Création...' : 'Créer'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialogues de modification */}
+      
+      {/* Modification Catégorie Produit */}
+      <Dialog open={!!editingProductCategory} onClose={handleCancelEdit} maxWidth="sm" fullWidth>
+        <DialogTitle>Modifier la catégorie de produit</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            <TextField
+              fullWidth
+              label="Nom de la catégorie"
+              value={productCategoryForm.name}
+              onChange={(e) => setProductCategoryForm({ ...productCategoryForm, name: e.target.value })}
+              sx={{ mb: 2 }}
+              required
+            />
+            <TextField
+              fullWidth
+              label="Description"
+              multiline
+              rows={3}
+              value={productCategoryForm.description}
+              onChange={(e) => setProductCategoryForm({ ...productCategoryForm, description: e.target.value })}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelEdit}>Annuler</Button>
+          <Button 
+            variant="contained" 
+            onClick={handleUpdateProductCategory}
+            disabled={updateProductCategoryMutation.isPending}
+          >
+            {updateProductCategoryMutation.isPending ? 'Modification...' : 'Modifier'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Modification Catégorie Équipement */}
+      <Dialog open={!!editingEquipmentCategory} onClose={handleCancelEdit} maxWidth="sm" fullWidth>
+        <DialogTitle>Modifier la catégorie d'équipement</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            <TextField
+              fullWidth
+              label="Nom de la catégorie"
+              value={equipmentCategoryForm.name}
+              onChange={(e) => setEquipmentCategoryForm({ ...equipmentCategoryForm, name: e.target.value })}
+              sx={{ mb: 2 }}
+              required
+            />
+            <TextField
+              fullWidth
+              label="Description"
+              multiline
+              rows={3}
+              value={equipmentCategoryForm.description}
+              onChange={(e) => setEquipmentCategoryForm({ ...equipmentCategoryForm, description: e.target.value })}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelEdit}>Annuler</Button>
+          <Button 
+            variant="contained" 
+            onClick={handleUpdateEquipmentCategory}
+            disabled={updateEquipmentCategoryMutation.isPending}
+          >
+            {updateEquipmentCategoryMutation.isPending ? 'Modification...' : 'Modifier'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Modification Produit */}
+      <Dialog open={!!editingProduct} onClose={handleCancelEdit} maxWidth="sm" fullWidth>
+        <DialogTitle>Modifier le produit</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            <TextField
+              fullWidth
+              label="Nom du produit"
+              value={productForm.name}
+              onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
+              sx={{ mb: 2 }}
+              required
+            />
+            <TextField
+              fullWidth
+              label="Description"
+              multiline
+              rows={3}
+              value={productForm.description}
+              onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
+              sx={{ mb: 2 }}
+            />
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <TextField
+                  fullWidth
+                  label="Prix"
+                  type="number"
+                  value={productForm.price}
+                  onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
+                  required
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  fullWidth
+                  label="Stock"
+                  type="number"
+                  value={productForm.stock}
+                  onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })}
+                  required
+                />
+              </Grid>
+            </Grid>
+            <FormControl fullWidth sx={{ mt: 2 }}>
+              <InputLabel>Catégorie</InputLabel>
+              <Select
+                value={productForm.category}
+                label="Catégorie"
+                onChange={(e) => setProductForm({ ...productForm, category: e.target.value })}
+                required
+              >
+                {Array.isArray(productCategories) && productCategories.map((category: any) => (
+                  <MenuItem key={category.id} value={category.id}>
+                    {category.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Box sx={{ mt: 2 }}>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = (e.target as HTMLInputElement).files?.[0];
+                  setProductForm({ ...productForm, image: file || null });
+                }}
+                style={{ marginBottom: '8px' }}
+              />
+              <Typography variant="caption" color="text.secondary">
+                Format accepté: JPG, PNG, GIF (max 5MB) - Laissez vide pour conserver l'image actuelle
+              </Typography>
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelEdit}>Annuler</Button>
+          <Button 
+            variant="contained" 
+            onClick={handleUpdateProduct}
+            disabled={updateProductMutation.isPending}
+          >
+            {updateProductMutation.isPending ? 'Modification...' : 'Modifier'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Modification Équipement */}
+      <Dialog open={!!editingEquipment} onClose={handleCancelEdit} maxWidth="sm" fullWidth>
+        <DialogTitle>Modifier l'équipement</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            <TextField
+              fullWidth
+              label="Nom de l'équipement"
+              value={equipmentForm.name}
+              onChange={(e) => setEquipmentForm({ ...equipmentForm, name: e.target.value })}
+              sx={{ mb: 2 }}
+              required
+            />
+            <TextField
+              fullWidth
+              label="Description"
+              multiline
+              rows={3}
+              value={equipmentForm.description}
+              onChange={(e) => setEquipmentForm({ ...equipmentForm, description: e.target.value })}
+              sx={{ mb: 2 }}
+            />
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <TextField
+                  fullWidth
+                  label="Prix de location par jour"
+                  type="number"
+                  value={equipmentForm.rental_price_per_day}
+                  onChange={(e) => setEquipmentForm({ ...equipmentForm, rental_price_per_day: e.target.value })}
+                  required
+                />
+              </Grid>
+            </Grid>
+            <FormControl fullWidth sx={{ mt: 2 }}>
+              <InputLabel>Catégorie</InputLabel>
+              <Select
+                value={equipmentForm.category}
+                label="Catégorie"
+                onChange={(e) => setEquipmentForm({ ...equipmentForm, category: e.target.value })}
+                required
+              >
+                {Array.isArray(equipmentCategories) && equipmentCategories.map((category: any) => (
+                  <MenuItem key={category.id} value={category.id}>
+                    {category.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Box sx={{ mt: 2 }}>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = (e.target as HTMLInputElement).files?.[0];
+                  setEquipmentForm({ ...equipmentForm, image: file || null });
+                }}
+                style={{ marginBottom: '8px' }}
+              />
+              <Typography variant="caption" color="text.secondary">
+                Format accepté: JPG, PNG, GIF (max 5MB) - Laissez vide pour conserver l'image actuelle
+              </Typography>
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelEdit}>Annuler</Button>
+          <Button 
+            variant="contained" 
+            onClick={handleUpdateEquipment}
+            disabled={updateEquipmentMutation.isPending}
+          >
+            {updateEquipmentMutation.isPending ? 'Modification...' : 'Modifier'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialogue de confirmation de suppression */}
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+        <DialogTitle>Confirmer la suppression</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Êtes-vous sûr de vouloir supprimer "{itemToDelete?.name}" ? Cette action est irréversible.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)}>Annuler</Button>
+          <Button 
+            onClick={handleDeleteConfirm} 
+            color="error" 
+            variant="contained"
+            disabled={
+              deleteProductCategoryMutation.isPending ||
+              deleteEquipmentCategoryMutation.isPending ||
+              deleteProductMutation.isPending ||
+              deleteEquipmentMutation.isPending
+            }
+          >
+            Supprimer
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialogues de modification */}
+      
+      {/* Modification Catégorie Produit */}
+      <Dialog open={!!editingProductCategory} onClose={handleCancelEdit} maxWidth="sm" fullWidth>
+        <DialogTitle>Modifier la catégorie de produit</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            <TextField
+              fullWidth
+              label="Nom de la catégorie"
+              value={productCategoryForm.name}
+              onChange={(e) => setProductCategoryForm({ ...productCategoryForm, name: e.target.value })}
+              sx={{ mb: 2 }}
+              required
+            />
+            <TextField
+              fullWidth
+              label="Description"
+              multiline
+              rows={3}
+              value={productCategoryForm.description}
+              onChange={(e) => setProductCategoryForm({ ...productCategoryForm, description: e.target.value })}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelEdit}>Annuler</Button>
+          <Button 
+            variant="contained" 
+            onClick={handleUpdateProductCategory}
+            disabled={updateProductCategoryMutation.isPending}
+          >
+            {updateProductCategoryMutation.isPending ? 'Modification...' : 'Modifier'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Modification Catégorie Équipement */}
+      <Dialog open={!!editingEquipmentCategory} onClose={handleCancelEdit} maxWidth="sm" fullWidth>
+        <DialogTitle>Modifier la catégorie d'équipement</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            <TextField
+              fullWidth
+              label="Nom de la catégorie"
+              value={equipmentCategoryForm.name}
+              onChange={(e) => setEquipmentCategoryForm({ ...equipmentCategoryForm, name: e.target.value })}
+              sx={{ mb: 2 }}
+              required
+            />
+            <TextField
+              fullWidth
+              label="Description"
+              multiline
+              rows={3}
+              value={equipmentCategoryForm.description}
+              onChange={(e) => setEquipmentCategoryForm({ ...equipmentCategoryForm, description: e.target.value })}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelEdit}>Annuler</Button>
+          <Button 
+            variant="contained" 
+            onClick={handleUpdateEquipmentCategory}
+            disabled={updateEquipmentCategoryMutation.isPending}
+          >
+            {updateEquipmentCategoryMutation.isPending ? 'Modification...' : 'Modifier'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Modification Produit */}
+      <Dialog open={!!editingProduct} onClose={handleCancelEdit} maxWidth="sm" fullWidth>
+        <DialogTitle>Modifier le produit</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            <TextField
+              fullWidth
+              label="Nom du produit"
+              value={productForm.name}
+              onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
+              sx={{ mb: 2 }}
+              required
+            />
+            <TextField
+              fullWidth
+              label="Description"
+              multiline
+              rows={3}
+              value={productForm.description}
+              onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
+              sx={{ mb: 2 }}
+            />
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <TextField
+                  fullWidth
+                  label="Prix"
+                  type="number"
+                  value={productForm.price}
+                  onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
+                  required
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  fullWidth
+                  label="Stock"
+                  type="number"
+                  value={productForm.stock}
+                  onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })}
+                  required
+                />
+              </Grid>
+            </Grid>
+            <FormControl fullWidth sx={{ mt: 2 }}>
+              <InputLabel>Catégorie</InputLabel>
+              <Select
+                value={productForm.category}
+                label="Catégorie"
+                onChange={(e) => setProductForm({ ...productForm, category: e.target.value })}
+                required
+              >
+                {Array.isArray(productCategories) && productCategories.map((category: any) => (
+                  <MenuItem key={category.id} value={category.id}>
+                    {category.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Box sx={{ mt: 2 }}>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = (e.target as HTMLInputElement).files?.[0];
+                  setProductForm({ ...productForm, image: file || null });
+                }}
+                style={{ marginBottom: '8px' }}
+              />
+              <Typography variant="caption" color="text.secondary">
+                Format accepté: JPG, PNG, GIF (max 5MB) - Laissez vide pour conserver l'image actuelle
+              </Typography>
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelEdit}>Annuler</Button>
+          <Button 
+            variant="contained" 
+            onClick={handleUpdateProduct}
+            disabled={updateProductMutation.isPending}
+          >
+            {updateProductMutation.isPending ? 'Modification...' : 'Modifier'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Modification Équipement */}
+      <Dialog open={!!editingEquipment} onClose={handleCancelEdit} maxWidth="sm" fullWidth>
+        <DialogTitle>Modifier l'équipement</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            <TextField
+              fullWidth
+              label="Nom de l'équipement"
+              value={equipmentForm.name}
+              onChange={(e) => setEquipmentForm({ ...equipmentForm, name: e.target.value })}
+              sx={{ mb: 2 }}
+              required
+            />
+            <TextField
+              fullWidth
+              label="Description"
+              multiline
+              rows={3}
+              value={equipmentForm.description}
+              onChange={(e) => setEquipmentForm({ ...equipmentForm, description: e.target.value })}
+              sx={{ mb: 2 }}
+            />
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <TextField
+                  fullWidth
+                  label="Prix de location par jour"
+                  type="number"
+                  value={equipmentForm.rental_price_per_day}
+                  onChange={(e) => setEquipmentForm({ ...equipmentForm, rental_price_per_day: e.target.value })}
+                  required
+                />
+              </Grid>
+            </Grid>
+            <FormControl fullWidth sx={{ mt: 2 }}>
+              <InputLabel>Catégorie</InputLabel>
+              <Select
+                value={equipmentForm.category}
+                label="Catégorie"
+                onChange={(e) => setEquipmentForm({ ...equipmentForm, category: e.target.value })}
+                required
+              >
+                {Array.isArray(equipmentCategories) && equipmentCategories.map((category: any) => (
+                  <MenuItem key={category.id} value={category.id}>
+                    {category.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Box sx={{ mt: 2 }}>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = (e.target as HTMLInputElement).files?.[0];
+                  setEquipmentForm({ ...equipmentForm, image: file || null });
+                }}
+                style={{ marginBottom: '8px' }}
+              />
+              <Typography variant="caption" color="text.secondary">
+                Format accepté: JPG, PNG, GIF (max 5MB) - Laissez vide pour conserver l'image actuelle
+              </Typography>
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelEdit}>Annuler</Button>
+          <Button 
+            variant="contained" 
+            onClick={handleUpdateEquipment}
+            disabled={updateEquipmentMutation.isPending}
+          >
+            {updateEquipmentMutation.isPending ? 'Modification...' : 'Modifier'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialogue de confirmation de suppression */}
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+        <DialogTitle>Confirmer la suppression</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Êtes-vous sûr de vouloir supprimer "{itemToDelete?.name}" ? Cette action est irréversible.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)}>Annuler</Button>
+          <Button 
+            onClick={handleDeleteConfirm} 
+            color="error" 
+            variant="contained"
+            disabled={
+              deleteProductCategoryMutation.isPending ||
+              deleteEquipmentCategoryMutation.isPending ||
+              deleteProductMutation.isPending ||
+              deleteEquipmentMutation.isPending
+            }
+          >
+            Supprimer
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Container>
+  );
+};
+
+export default Admin; 
