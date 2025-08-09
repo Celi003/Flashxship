@@ -64,8 +64,8 @@ const Products: React.FC = () => {
 
   // Fetch products
   const { data: productsResponse, isLoading, error } = useQuery({
-    queryKey: ['products', selectedCategory],
-    queryFn: () => selectedCategory ? productService.getByCategory(selectedCategory) : productService.getAll()
+    queryKey: ['products'],
+    queryFn: productService.getAll
   });
 
     // Extract products array from response with better error handling
@@ -262,7 +262,7 @@ const Products: React.FC = () => {
                                          <CardMedia
                        component="img"
                        height="200"
-                       image={product.images?.[0]?.image ? `http://localhost:8000${product.images[0].image}` : 'https://via.placeholder.com/300x200/cccccc/666666?text=Produit'}
+                       image={product.images?.[0]?.image_url || (product.images?.[0]?.image ? `http://localhost:8000${product.images[0].image}` : 'https://via.placeholder.com/300x200/cccccc/666666?text=Produit')}
                        alt={product.name}
                        sx={{ objectFit: 'cover' }}
                                               onLoad={(e) => {

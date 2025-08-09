@@ -366,6 +366,15 @@ def success(request):
 @permission_classes([IsAuthenticated])
 def create_order(request):
     """Créer une commande avec informations de livraison"""
+    # Utiliser l'authentification JWT
+    from .authentication import JWTAuthentication
+    auth = JWTAuthentication()
+    user, _ = auth.authenticate(request)
+    if not user:
+        return Response({'detail': 'Informations d\'authentification non fournies.'}, status=status.HTTP_401_UNAUTHORIZED)
+    
+    request.user = user
+    
     try:
         items = request.data.get('items', [])
         customer_info = request.data.get('customer_info', {})

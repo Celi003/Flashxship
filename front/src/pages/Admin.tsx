@@ -53,7 +53,9 @@ import {
   Cancel as CancelIcon,
   LocalShipping as ShipIcon,
   DeliveryDining as DeliverIcon,
-  Reply as ReplyIcon
+  Reply as ReplyIcon,
+  Block as BlockIcon,
+  CheckCircle as CheckCircleIcon
 } from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
@@ -146,11 +148,24 @@ const Admin: React.FC = () => {
     queryFn: equipmentService.getAll
   });
 
+  // Fetch orders and contact messages
+  const { data: ordersResponse } = useQuery({
+    queryKey: ['orders'],
+    queryFn: orderService.getAll
+  });
+
+  const { data: contactMessagesResponse } = useQuery({
+    queryKey: ['contact-messages'],
+    queryFn: contactService.getAll
+  });
+
   // Extract arrays from responses
   const productCategories = productCategoriesResponse?.results || [];
   const equipmentCategories = equipmentCategoriesResponse?.results || [];
   const products = Array.isArray(productsResponse) ? productsResponse : (productsResponse as any)?.results || [];
   const equipment = Array.isArray(equipmentResponse) ? equipmentResponse : (equipmentResponse as any)?.results || [];
+  const orders = Array.isArray(ordersResponse) ? ordersResponse : (ordersResponse as any)?.results || [];
+  const contactMessages = Array.isArray(contactMessagesResponse) ? contactMessagesResponse : (contactMessagesResponse as any)?.results || [];
 
   // Mutations
   const createProductCategoryMutation = useMutation({
@@ -475,6 +490,36 @@ const Admin: React.FC = () => {
     resetForms();
   };
 
+  const handleToggleAvailability = async (equipmentId: number, currentAvailable: boolean) => {
+    try {
+      const newAvailable = !currentAvailable;
+      
+      // Récupérer l'équipement existant pour avoir tous les champs
+      const equipmentToUpdate = equipment.find((e: any) => e.id === equipmentId);
+      if (!equipmentToUpdate) {
+        toast.error('Équipement non trouvé');
+        return;
+      }
+      
+      const formData = new FormData();
+      formData.append('name', equipmentToUpdate.name);
+      formData.append('description', equipmentToUpdate.description || '');
+      formData.append('rental_price_per_day', equipmentToUpdate.rental_price_per_day.toString());
+      formData.append('category_id', equipmentToUpdate.category.id.toString());
+      formData.append('available', newAvailable.toString());
+      
+      await equipmentService.update(equipmentId, formData);
+      
+      // Invalider et recharger les données
+      queryClient.invalidateQueries({ queryKey: ['equipment'] });
+      
+      toast.success(`Équipement marqué comme ${newAvailable ? 'disponible' : 'indisponible'}`);
+    } catch (error) {
+      console.error('Erreur lors du changement de disponibilité:', error);
+      toast.error('Erreur lors du changement de disponibilité');
+    }
+  };
+
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
@@ -681,11 +726,76 @@ const Admin: React.FC = () => {
           </Button>
         </Box>
         
+        {/* Debug: Affichage des données des produits */}
+        {products.length > 0 && (
+          <Box sx={{ mb: 3, p: 2, border: '2px dashed #ccc', borderRadius: 2, backgroundColor: '#f5f5f5' }}>
+            <Typography variant="h6" sx={{ mb: 2 }}>
+              🧪 Debug - Données des produits
+            </Typography>
+            <Typography variant="body2" sx={{ mb: 1 }}>
+              Nombre de produits: {products.length}
+            </Typography>
+            {products.slice(0, 2).map((product: any, index: number) => (
+              <Box key={index} sx={{ mb: 2, p: 2, border: '1px solid #ddd', borderRadius: 1, backgroundColor: 'white' }}>
+                <Typography variant="body2">
+                  <strong>Produit {index + 1}:</strong> {product.name}
+                </Typography>
+                <Typography variant="body2">
+                  <strong>Images:</strong> {product.images ? `${product.images.length} image(s)` : 'Aucune image'}
+                </Typography>
+                {product.images && product.images.length > 0 && (
+                  <Typography variant="body2">
+                    <strong>Première image:</strong> {product.images[0].image}
+                  </Typography>
+                )}
+                <Typography variant="body2">
+                  <strong>Données complètes:</strong> {JSON.stringify(product, null, 2)}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+        )}
+        
         <Grid container spacing={3}>
           {Array.isArray(products) && products.map((product: any) => (
             <Grid item xs={12} sm={6} md={4} key={product.id}>
               <Card>
                 <CardContent>
+                  {/* Image du produit */}
+                  {product.images && product.images.length > 0 ? (
+                    <Box sx={{ mb: 2, textAlign: 'center' }}>
+                      <img
+                        src={product.images[0].image_url || `http://localhost:8000${product.images[0].image}`}
+                        alt={product.name}
+                        style={{
+                          width: '100%',
+                          height: '150px',
+                          objectFit: 'cover',
+                          borderRadius: '8px'
+                        }}
+                        onError={(e) => {
+                          console.log('❌ Image error for product:', product.name, 'Image path:', product.images[0].image);
+                          (e.target as HTMLImageElement).src = 'https://via.placeholder.com/300x150/cccccc/666666?text=Image+non+disponible';
+                        }}
+                        onLoad={(e) => {
+                          console.log('✅ Image loaded successfully for product:', product.name, 'URL:', product.images[0].image);
+                        }}
+                      />
+                    </Box>
+                  ) : (
+                    <Box sx={{ mb: 2, textAlign: 'center' }}>
+                      <img
+                        src="https://via.placeholder.com/300x150/cccccc/666666?text=Aucune+image"
+                        alt="Aucune image"
+                        style={{
+                          width: '100%',
+                          height: '150px',
+                          objectFit: 'cover',
+                          borderRadius: '8px'
+                        }}
+                      />
+                    </Box>
+                  )}
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <Box sx={{ flex: 1 }}>
                       <Typography variant="h6" sx={{ fontWeight: 600 }}>
@@ -746,6 +856,41 @@ const Admin: React.FC = () => {
              <Grid item xs={12} sm={6} md={4} key={equip.id}>
                <Card>
                  <CardContent>
+                   {/* Image de l'équipement */}
+                   {equip.images && equip.images.length > 0 ? (
+                     <Box sx={{ mb: 2, textAlign: 'center' }}>
+                       <img
+                         src={equip.images[0].image_url || `http://localhost:8000${equip.images[0].image}`}
+                         alt={equip.name}
+                         style={{
+                           width: '100%',
+                           height: '150px',
+                           objectFit: 'cover',
+                           borderRadius: '8px'
+                         }}
+                         onError={(e) => {
+                           console.log('❌ Image error for equipment:', equip.name, 'Image path:', equip.images[0].image);
+                           (e.target as HTMLImageElement).src = 'https://via.placeholder.com/300x150/cccccc/666666?text=Image+non+disponible';
+                         }}
+                         onLoad={(e) => {
+                           console.log('✅ Image loaded successfully for equipment:', equip.name, 'URL:', equip.images[0].image);
+                         }}
+                       />
+                     </Box>
+                   ) : (
+                     <Box sx={{ mb: 2, textAlign: 'center' }}>
+                       <img
+                         src="https://via.placeholder.com/300x150/cccccc/666666?text=Aucune+image"
+                         alt="Aucune image"
+                         style={{
+                           width: '100%',
+                           height: '150px',
+                           objectFit: 'cover',
+                           borderRadius: '8px'
+                         }}
+                       />
+                     </Box>
+                   )}
                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                      <Box sx={{ flex: 1 }}>
                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
@@ -775,15 +920,24 @@ const Admin: React.FC = () => {
                            <EditIcon />
                          </IconButton>
                        </Tooltip>
-                       <Tooltip title="Supprimer">
-                         <IconButton
-                           size="small"
-                           onClick={() => handleDeleteClick('equipment', equip.id, equip.name)}
-                           color="error"
-                         >
-                           <DeleteIcon />
-                         </IconButton>
-                       </Tooltip>
+                                             <Tooltip title="Changer disponibilité">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleToggleAvailability(equip.id, equip.available)}
+                          color={equip.available ? 'warning' : 'success'}
+                        >
+                          {equip.available ? <BlockIcon /> : <CheckCircleIcon />}
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Supprimer">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleDeleteClick('equipment', equip.id, equip.name)}
+                          color="error"
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Tooltip>
                      </Box>
                    </Box>
                  </CardContent>
@@ -806,33 +960,71 @@ const Admin: React.FC = () => {
              <Card>
                <CardContent>
                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-                   Commandes en cours
+                   Commandes ({orders.length})
                  </Typography>
-                 <List>
-                   <ListItem>
-                     <ListItemText
-                       primary="Commande #1234"
-                       secondary="Client: Jean Dupont - Total: 150€ - Statut: En cours"
-                     />
-                     <ListItemSecondaryAction>
-                       <IconButton edge="end" aria-label="edit">
-                         <EditIcon />
-                       </IconButton>
-                     </ListItemSecondaryAction>
-                   </ListItem>
-                   <Divider />
-                   <ListItem>
-                     <ListItemText
-                       primary="Commande #1235"
-                       secondary="Client: Marie Martin - Total: 89€ - Statut: En cours"
-                     />
-                     <ListItemSecondaryAction>
-                       <IconButton edge="end" aria-label="edit">
-                         <EditIcon />
-                       </IconButton>
-                     </ListItemSecondaryAction>
-                   </ListItem>
-                 </List>
+                 {orders.length === 0 ? (
+                   <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 3 }}>
+                     Aucune commande trouvée
+                   </Typography>
+                 ) : (
+                   <List>
+                     {orders.map((order: Order) => (
+                       <React.Fragment key={order.id}>
+                         <ListItem>
+                           <ListItemText
+                             primary={`Commande #${order.id}`}
+                             secondary={`Client: ${order.user?.username || 'N/A'} - Total: ${formatPrice(order.total_amount)} - Statut: ${order.status} - Paiement: ${order.payment_status}`}
+                           />
+                           <ListItemSecondaryAction>
+                             <Box sx={{ display: 'flex', gap: 1 }}>
+                               <Tooltip title="Confirmer">
+                                 <IconButton 
+                                   edge="end" 
+                                   aria-label="confirm"
+                                   color="success"
+                                   size="small"
+                                 >
+                                   <CheckCircleIcon />
+                                 </IconButton>
+                               </Tooltip>
+                               <Tooltip title="Rejeter">
+                                 <IconButton 
+                                   edge="end" 
+                                   aria-label="reject"
+                                   color="error"
+                                   size="small"
+                                 >
+                                   <CancelIcon />
+                                 </IconButton>
+                               </Tooltip>
+                                                               <Tooltip title="Expédier">
+                                  <IconButton 
+                                    edge="end" 
+                                    aria-label="ship"
+                                    color="primary"
+                                    size="small"
+                                  >
+                                    <ShipIcon />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Livrer">
+                                  <IconButton 
+                                    edge="end" 
+                                    aria-label="deliver"
+                                    color="secondary"
+                                    size="small"
+                                  >
+                                    <DeliverIcon />
+                                  </IconButton>
+                                </Tooltip>
+                             </Box>
+                           </ListItemSecondaryAction>
+                         </ListItem>
+                         {order.id !== orders[orders.length - 1]?.id && <Divider />}
+                       </React.Fragment>
+                     ))}
+                   </List>
+                 )}
                </CardContent>
              </Card>
            </Grid>
@@ -852,33 +1044,39 @@ const Admin: React.FC = () => {
              <Card>
                <CardContent>
                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-                   Messages récents
+                   Messages ({contactMessages.length})
                  </Typography>
-                 <List>
-                   <ListItem>
-                     <ListItemText
-                       primary="Demande de devis"
-                       secondary="De: contact@entreprise.com - Sujet: Location d'équipements pour chantier"
-                     />
-                     <ListItemSecondaryAction>
-                       <IconButton edge="end" aria-label="view">
-                         <EditIcon />
-                       </IconButton>
-                     </ListItemSecondaryAction>
-                   </ListItem>
-                   <Divider />
-                   <ListItem>
-                     <ListItemText
-                       primary="Question technique"
-                       secondary="De: technicien@pro.com - Sujet: Spécifications mini-pelle"
-                     />
-                     <ListItemSecondaryAction>
-                       <IconButton edge="end" aria-label="view">
-                         <EditIcon />
-                       </IconButton>
-                     </ListItemSecondaryAction>
-                   </ListItem>
-                 </List>
+                 {contactMessages.length === 0 ? (
+                   <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 3 }}>
+                     Aucun message trouvé
+                   </Typography>
+                 ) : (
+                   <List>
+                     {contactMessages.map((message: ContactMessage) => (
+                       <React.Fragment key={message.id}>
+                         <ListItem>
+                           <ListItemText
+                             primary={message.subject}
+                             secondary={`De: ${message.email} - Nom: ${message.name} - ${new Date(message.created_at).toLocaleDateString()}`}
+                           />
+                           <ListItemSecondaryAction>
+                             <Tooltip title="Répondre">
+                               <IconButton 
+                                 edge="end" 
+                                 aria-label="respond"
+                                 color="primary"
+                                 size="small"
+                               >
+                                 <ReplyIcon />
+                               </IconButton>
+                             </Tooltip>
+                           </ListItemSecondaryAction>
+                         </ListItem>
+                         {message.id !== contactMessages[contactMessages.length - 1]?.id && <Divider />}
+                       </React.Fragment>
+                     ))}
+                   </List>
+                 )}
                </CardContent>
              </Card>
            </Grid>

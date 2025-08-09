@@ -214,7 +214,7 @@ export const orderService = {
   },
 
   createPaymentSession: async (orderId: number) => {
-    const response = await api.post('/create-payment-session/', { order_id: orderId });
+    const response = await api.post('/create_payment_session/', { order_id: orderId });
     return response.data;
   }
 };
@@ -226,7 +226,7 @@ export const contactService = {
   },
   
   getAll: async (): Promise<ContactMessage[]> => {
-    const response = await api.get('/admin-messages/');
+    const response = await api.get('/admin/messages/');
     return response.data;
   },
   

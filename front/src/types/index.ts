@@ -50,7 +50,7 @@ export interface OrderItem {
 
 export interface Order {
   id: number;
-  user: number;
+  user: User;
   created_at: string;
   updated_at: string;
   status: 'PENDING' | 'CONFIRMED' | 'REJECTED' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';

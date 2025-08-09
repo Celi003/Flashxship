@@ -55,7 +55,7 @@ const Equipment: React.FC = () => {
   });
   const { data: equipmentResponse, isLoading } = useQuery({
     queryKey: ['equipment'],
-    queryFn: () => selectedCategory ? equipmentService.getByCategory(selectedCategory) : equipmentService.getAll()
+    queryFn: equipmentService.getAll
   });
 
   // Extract arrays from responses with better error handling
@@ -160,6 +160,39 @@ const Equipment: React.FC = () => {
         </motion.div>
       </Box>
 
+      {/* Debug: Affichage des données des équipements */}
+      {equipment.length > 0 && (
+        <Box sx={{ mb: 4, p: 2, border: '2px dashed #ccc', borderRadius: 2, backgroundColor: '#f5f5f5' }}>
+          <Typography variant="h6" sx={{ mb: 2 }}>
+            🧪 Debug - Données des équipements
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 1 }}>
+            Nombre d'équipements: {equipment.length}
+          </Typography>
+          {equipment.slice(0, 2).map((equip: any, index: number) => (
+            <Box key={index} sx={{ mb: 2, p: 2, border: '1px solid #ddd', borderRadius: 1, backgroundColor: 'white' }}>
+              <Typography variant="body2">
+                <strong>Équipement {index + 1}:</strong> {equip.name}
+              </Typography>
+              <Typography variant="body2">
+                <strong>Disponible:</strong> {equip.available ? 'Oui' : 'Non'} (valeur: {String(equip.available)})
+              </Typography>
+              <Typography variant="body2">
+                <strong>Images:</strong> {equip.images ? `${equip.images.length} image(s)` : 'Aucune image'}
+              </Typography>
+              {equip.images && equip.images.length > 0 && (
+                <Typography variant="body2">
+                  <strong>Première image:</strong> {equip.images[0].image_url || equip.images[0].image}
+                </Typography>
+              )}
+              <Typography variant="body2">
+                <strong>Données complètes:</strong> {JSON.stringify(equip, null, 2)}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
+      )}
+
       {/* Filters */}
       <Box sx={{ mb: 4 }}>
         <Grid container spacing={2} alignItems="center">
@@ -249,7 +282,7 @@ const Equipment: React.FC = () => {
                      component="img"
                      height="200"
                                            image={equipment.images && equipment.images.length > 0 
-                        ? (equipment.images[0].image ? `http://localhost:8000${equipment.images[0].image}` : 'https://via.placeholder.com/300x200/cccccc/666666?text=Equipement')
+                        ? (equipment.images[0].image_url || (equipment.images[0].image ? `http://localhost:8000${equipment.images[0].image}` : 'https://via.placeholder.com/300x200/cccccc/666666?text=Equipement'))
                         : 'https://via.placeholder.com/300x200/cccccc/666666?text=Equipement'}
                      alt={equipment.name}
                      sx={{ objectFit: 'cover' }}
@@ -463,4 +496,3 @@ const Equipment: React.FC = () => {
 
 export default Equipment;
 
-export {};
