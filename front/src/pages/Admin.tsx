@@ -568,6 +568,55 @@ const Admin: React.FC = () => {
     createEquipmentMutation.mutate(equipmentData);
   };
 
+  // Fonctions de gestion des actions d'admin
+  const handleConfirmOrder = async (orderId: number) => {
+    try {
+      await orderService.confirm(orderId);
+      toast.success('Commande confirmée avec succès');
+      // Rafraîchir la liste des commandes
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    } catch (error) {
+      console.error('Erreur lors de la confirmation:', error);
+      toast.error('Erreur lors de la confirmation de la commande');
+    }
+  };
+
+  const handleRejectOrder = async (orderId: number) => {
+    try {
+      await orderService.reject(orderId);
+      toast.success('Commande rejetée avec succès');
+      // Rafraîchir la liste des commandes
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    } catch (error) {
+      console.error('Erreur lors du rejet:', error);
+      toast.error('Erreur lors du rejet de la commande');
+    }
+  };
+
+  const handleShipOrder = async (orderId: number) => {
+    try {
+      await orderService.ship(orderId);
+      toast.success('Commande expédiée avec succès');
+      // Rafraîchir la liste des commandes
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    } catch (error) {
+      console.error('Erreur lors de l\'expédition:', error);
+      toast.error('Erreur lors de l\'expédition de la commande');
+    }
+  };
+
+  const handleDeliverOrder = async (orderId: number) => {
+    try {
+      await orderService.deliver(orderId);
+      toast.success('Commande livrée avec succès');
+      // Rafraîchir la liste des commandes
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    } catch (error) {
+      console.error('Erreur lors de la livraison:', error);
+      toast.error('Erreur lors de la livraison de la commande');
+    }
+  };
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
@@ -977,32 +1026,35 @@ const Admin: React.FC = () => {
                            />
                            <ListItemSecondaryAction>
                              <Box sx={{ display: 'flex', gap: 1 }}>
-                               <Tooltip title="Confirmer">
-                                 <IconButton 
-                                   edge="end" 
-                                   aria-label="confirm"
-                                   color="success"
-                                   size="small"
-                                 >
-                                   <CheckCircleIcon />
-                                 </IconButton>
-                               </Tooltip>
-                               <Tooltip title="Rejeter">
-                                 <IconButton 
-                                   edge="end" 
-                                   aria-label="reject"
-                                   color="error"
-                                   size="small"
-                                 >
-                                   <CancelIcon />
-                                 </IconButton>
-                               </Tooltip>
+                                                               <Tooltip title="Confirmer">
+                                  <IconButton 
+                                    edge="end" 
+                                    aria-label="confirm"
+                                    color="success"
+                                    size="small"
+                                    onClick={() => handleConfirmOrder(order.id)}
+                                  >
+                                    <CheckCircleIcon />
+                                  </IconButton>
+                                </Tooltip>
+                                                               <Tooltip title="Rejeter">
+                                  <IconButton 
+                                    edge="end" 
+                                    aria-label="reject"
+                                    color="error"
+                                    size="small"
+                                    onClick={() => handleRejectOrder(order.id)}
+                                  >
+                                    <CancelIcon />
+                                  </IconButton>
+                                </Tooltip>
                                                                <Tooltip title="Expédier">
                                   <IconButton 
                                     edge="end" 
                                     aria-label="ship"
                                     color="primary"
                                     size="small"
+                                    onClick={() => handleShipOrder(order.id)}
                                   >
                                     <ShipIcon />
                                   </IconButton>
@@ -1013,6 +1065,7 @@ const Admin: React.FC = () => {
                                     aria-label="deliver"
                                     color="secondary"
                                     size="small"
+                                    onClick={() => handleDeliverOrder(order.id)}
                                   >
                                     <DeliverIcon />
                                   </IconButton>

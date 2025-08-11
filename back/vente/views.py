@@ -1,7 +1,7 @@
 from django.core.mail import send_mail
 from django.shortcuts import render
 from rest_framework import viewsets, status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.response import Response
 from django.contrib.auth import authenticate, login, logout
@@ -607,6 +607,7 @@ def stripe_webhook(request):
             try:
                 order = Order.objects.get(id=order_id)
                 order.payment_status = 'PAID'
+                order.status = 'PAID'
                 order.stripe_session_id = session['id']
                 order.save()
             except Order.DoesNotExist:
@@ -616,7 +617,7 @@ def stripe_webhook(request):
 
 # Nouvelles vues pour la gestion des commandes
 @api_view(['POST'])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAdminOrReadOnly])
 def confirm_order(request, order_id):
     try:
         order = Order.objects.get(id=order_id)
@@ -638,7 +639,7 @@ def confirm_order(request, order_id):
         return Response({'error': 'Commande non trouvée'}, status=404)
 
 @api_view(['POST'])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAdminOrReadOnly])
 def reject_order(request, order_id):
     try:
         order = Order.objects.get(id=order_id)
@@ -660,7 +661,7 @@ def reject_order(request, order_id):
         return Response({'error': 'Commande non trouvée'}, status=404)
 
 @api_view(['POST'])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAdminOrReadOnly])
 def ship_order(request, order_id):
     try:
         order = Order.objects.get(id=order_id)
@@ -672,7 +673,7 @@ def ship_order(request, order_id):
         return Response({'error': 'Commande non trouvée'}, status=404)
 
 @api_view(['POST'])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAdminOrReadOnly])
 def deliver_order(request, order_id):
     try:
         order = Order.objects.get(id=order_id)
@@ -695,14 +696,16 @@ def deliver_order(request, order_id):
 
 # Nouvelles vues pour la gestion des messages
 @api_view(['GET'])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAdminOrReadOnly])
+@authentication_classes([JWTAuthentication])
 def admin_messages(request):
     messages = ContactMessage.objects.all().order_by('-created_at')
     serializer = ContactMessageSerializer(messages, many=True)
     return Response(serializer.data)
 
 @api_view(['POST'])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAdminOrReadOnly])
+@authentication_classes([JWTAuthentication])
 def respond_to_message(request, message_id):
     try:
         message = ContactMessage.objects.get(id=message_id)

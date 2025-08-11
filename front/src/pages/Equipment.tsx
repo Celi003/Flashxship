@@ -68,11 +68,7 @@ const Equipment: React.FC = () => {
                     (equipmentResponse && typeof equipmentResponse === 'object' ? Object.values(equipmentResponse) : []) || 
                     [];
 
-  // Debug: log equipment data
-  console.log('🔧 Equipment data:', equipment);
-  if (equipment.length > 0 && equipment[0].images) {
-    console.log('🖼️ First equipment images:', equipment[0].images);
-  }
+
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('fr-FR', {
@@ -160,38 +156,7 @@ const Equipment: React.FC = () => {
         </motion.div>
       </Box>
 
-      {/* Debug: Affichage des données des équipements */}
-      {equipment.length > 0 && (
-        <Box sx={{ mb: 4, p: 2, border: '2px dashed #ccc', borderRadius: 2, backgroundColor: '#f5f5f5' }}>
-          <Typography variant="h6" sx={{ mb: 2 }}>
-            🧪 Debug - Données des équipements
-          </Typography>
-          <Typography variant="body2" sx={{ mb: 1 }}>
-            Nombre d'équipements: {equipment.length}
-          </Typography>
-          {equipment.slice(0, 2).map((equip: any, index: number) => (
-            <Box key={index} sx={{ mb: 2, p: 2, border: '1px solid #ddd', borderRadius: 1, backgroundColor: 'white' }}>
-              <Typography variant="body2">
-                <strong>Équipement {index + 1}:</strong> {equip.name}
-              </Typography>
-              <Typography variant="body2">
-                <strong>Disponible:</strong> {equip.available ? 'Oui' : 'Non'} (valeur: {String(equip.available)})
-              </Typography>
-              <Typography variant="body2">
-                <strong>Images:</strong> {equip.images ? `${equip.images.length} image(s)` : 'Aucune image'}
-              </Typography>
-              {equip.images && equip.images.length > 0 && (
-                <Typography variant="body2">
-                  <strong>Première image:</strong> {equip.images[0].image_url || equip.images[0].image}
-                </Typography>
-              )}
-              <Typography variant="body2">
-                <strong>Données complètes:</strong> {JSON.stringify(equip, null, 2)}
-              </Typography>
-            </Box>
-          ))}
-        </Box>
-      )}
+
 
       {/* Filters */}
       <Box sx={{ mb: 4 }}>

@@ -54,6 +54,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'vente.middleware.CSRFExemptMiddleware',
 ]
 
 
@@ -73,6 +74,14 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20
 }
+
+# Désactiver CSRF pour les vues d'API
+CSRF_EXEMPT_URLS = [
+    r'^admin/orders/\d+/confirm/$',
+    r'^admin/orders/\d+/reject/$',
+    r'^admin/orders/\d+/ship/$',
+    r'^admin/orders/\d+/deliver/$',
+]
 
 
 ROOT_URLCONF = 'back.urls'
@@ -206,6 +215,11 @@ CORS_ALLOW_HEADERS = [
     'user-agent',
     'x-csrftoken',
     'x-requested-with',
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
 ]
 
 # Session Configuration pour cross-origin

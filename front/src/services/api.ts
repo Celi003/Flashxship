@@ -216,6 +216,23 @@ export const orderService = {
   createPaymentSession: async (orderId: number) => {
     const response = await api.post('/create_payment_session/', { order_id: orderId });
     return response.data;
+  },
+
+  // Méthodes d'administration
+  confirm: async (orderId: number): Promise<void> => {
+    await api.post(`/admin/orders/${orderId}/confirm/`);
+  },
+
+  reject: async (orderId: number): Promise<void> => {
+    await api.post(`/admin/orders/${orderId}/reject/`);
+  },
+
+  ship: async (orderId: number): Promise<void> => {
+    await api.post(`/admin/orders/${orderId}/ship/`);
+  },
+
+  deliver: async (orderId: number): Promise<void> => {
+    await api.post(`/admin/orders/${orderId}/deliver/`);
   }
 };
 
@@ -231,7 +248,7 @@ export const contactService = {
   },
   
   respond: async (messageId: number, response: string): Promise<void> => {
-    await api.post(`/respond-to-message/${messageId}/`, { response });
+    await api.post(`/admin/messages/${messageId}/respond/`, { response });
   }
 };
 

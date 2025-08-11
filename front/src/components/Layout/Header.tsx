@@ -67,19 +67,35 @@ const Header: React.FC = () => {
       <Toolbar sx={{ justifyContent: 'space-between' }}>
         {/* Logo et navigation principale */}
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-            <Typography 
-              variant="h4" 
-              sx={{ 
-                fontWeight: 700, 
-                color: theme.palette.text.primary,
-                fontFamily: '"Playfair Display", serif',
-                letterSpacing: '0.1em'
-              }}
-            >
-              FLASHXSHIP
-            </Typography>
-          </Link>
+                     <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+               <img 
+                 src="/logo.png" 
+                 alt="FLASHXSHIP Logo" 
+                 style={{ 
+                   height: '40px', 
+                   width: 'auto',
+                   objectFit: 'contain'
+                 }}
+                 onError={(e) => {
+                   // Fallback au texte si l'image ne charge pas
+                   const target = e.target as HTMLImageElement;
+                   target.style.display = 'none';
+                 }}
+               />
+               <Typography 
+                 variant="h4" 
+                 sx={{ 
+                   fontWeight: 700, 
+                   color: theme.palette.text.primary,
+                   fontFamily: '"Playfair Display", serif',
+                   letterSpacing: '0.1em'
+                 }}
+               >
+                 FLASHXSHIP
+               </Typography>
+             </Box>
+           </Link>
           
           {!isMobile && (
             <Box sx={{ ml: 4, display: 'flex', gap: 2 }}>

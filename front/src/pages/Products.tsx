@@ -74,14 +74,7 @@ const Products: React.FC = () => {
                     (productsResponse && typeof productsResponse === 'object' ? Object.values(productsResponse) : []) || 
                     [];
 
-  // Debug: log products data
-  console.log('📦 Products data:', products);
-  if (products.length > 0) {
-    console.log('🖼️ First product complete data:', JSON.stringify(products[0], null, 2));
-    if (products[0].images) {
-      console.log('🖼️ First product images:', products[0].images);
-    }
-  }
+
 
   // Filter and sort products
   const filteredProducts = products
