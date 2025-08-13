@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-ahv_lb73x9eypae8pqv9x0)58ced3azb5(6$h667*x2w2rp=is
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '42ccf785e2b0.ngrok-free.app', '.onrender.com']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '42ccf785e2b0.ngrok-free.app', '.onrender.com', 'flashxship.vercel.app']
 
 
 # Application definition
@@ -211,6 +211,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
     "https://42ccf785e2b0.ngrok-free.app",
     "https://.onrender.com",
+    "https://flashxship.vercel.app"
 ]
 
 CORS_ALLOW_CREDENTIALS = True
