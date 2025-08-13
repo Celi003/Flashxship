@@ -236,7 +236,7 @@ const Products: React.FC = () => {
                                          <CardMedia
                        component="img"
                        height="200"
-                       image={product.images?.[0]?.image_url || (product.images?.[0]?.image ? `http://localhost:8000${product.images[0].image}` : 'https://via.placeholder.com/300x200/cccccc/666666?text=Produit')}
+                       image={product.images?.[0]?.image_url || (product.images?.[0]?.image ? `https://flashxship.onrender.com${product.images[0].image}` : 'https://via.placeholder.com/300x200/cccccc/666666?text=Produit')}
                        alt={product.name}
                        sx={{ objectFit: 'cover' }}
                                               onLoad={() => {
@@ -367,7 +367,7 @@ const Products: React.FC = () => {
                                          {selectedProduct.images.map((image, index) => (
                        <Avatar
                          key={index}
-                                                   src={image.image ? `http://localhost:8000${image.image}` : undefined}
+                                                   src={image.image ? `https://flashxship.onrender.com${image.image}` : undefined}
                          sx={{ width: 100, height: 100 }}
                          variant="rounded"
                          onError={(e) => {

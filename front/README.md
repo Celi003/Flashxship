@@ -40,7 +40,7 @@ Frontend moderne et responsive pour la plateforme e-commerce FlashxShip, spécia
 3. **Configurer l'environnement**
    Créer un fichier `.env` à la racine du projet :
    ```env
-   REACT_APP_API_URL=http://localhost:8000/api
+   REACT_APP_API_URL=https://flashxship.onrender.com/api
    REACT_APP_STRIPE_PUBLIC_KEY=your_stripe_public_key
    ```
 
@@ -87,12 +87,12 @@ src/
 
 | Variable | Description | Défaut |
 |----------|-------------|---------|
-| `REACT_APP_API_URL` | URL de l'API backend | `http://localhost:8000/api` |
+| `REACT_APP_API_URL` | URL de l'API backend | `https://flashxship.onrender.com/api` |
 | `REACT_APP_STRIPE_PUBLIC_KEY` | Clé publique Stripe | - |
 
 ### Proxy de développement
 
-Le projet est configuré avec un proxy vers `http://localhost:8000` pour éviter les problèmes de CORS en développement.
+Le projet est configuré avec un proxy vers `https://flashxship.onrender.com` pour éviter les problèmes de CORS en développement.
 
 ## 📱 Responsive Design
 
@@ -115,7 +115,7 @@ Assurez-vous de configurer les variables d'environnement appropriées pour la pr
 
 ## 🔗 Intégration avec le backend
 
-Le frontend communique avec le backend Django via l'API REST. Assurez-vous que le backend est en cours d'exécution sur `http://localhost:8000` avant de démarrer le frontend.
+Le frontend communique avec le backend Django via l'API REST. Assurez-vous que le backend est en cours d'exécution sur `https://flashxship.onrender.com` avant de démarrer le frontend.
 
 ## 📄 Licence
 

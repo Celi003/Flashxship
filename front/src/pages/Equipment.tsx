@@ -247,7 +247,7 @@ const Equipment: React.FC = () => {
                      component="img"
                      height="200"
                                            image={equipment.images && equipment.images.length > 0 
-                        ? (equipment.images[0].image_url || (equipment.images[0].image ? `http://localhost:8000${equipment.images[0].image}` : 'https://via.placeholder.com/300x200/cccccc/666666?text=Equipement'))
+                        ? (equipment.images[0].image_url || (equipment.images[0].image ? `https://flashxship.onrender.com${equipment.images[0].image}` : 'https://via.placeholder.com/300x200/cccccc/666666?text=Equipement'))
                         : 'https://via.placeholder.com/300x200/cccccc/666666?text=Equipement'}
                      alt={equipment.name}
                      sx={{ objectFit: 'cover' }}
@@ -425,7 +425,7 @@ const Equipment: React.FC = () => {
                                          {selectedEquipment.images.map((image, index) => (
                        <Avatar
                          key={index}
-                                                   src={image.image ? `http://localhost:8000${image.image}` : undefined}
+                                                   src={image.image ? `https://flashxship.onrender.com${image.image}` : undefined}
                          sx={{ width: 100, height: 100 }}
                          variant="rounded"
                          onError={(e) => {
