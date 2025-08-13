@@ -12,7 +12,7 @@ import json
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'back.settings')
 django.setup()
 
-from vente.models import Order, User
+from vente.models import Order, ProductCategory, Product
 from django.contrib.auth.models import User as AuthUser
 
 def test_admin_actions():
@@ -28,9 +28,22 @@ def test_admin_actions():
         print("   ❌ Aucun utilisateur admin trouvé")
         return
     
-    # 2. Vérifier les commandes existantes
+    # 2. Créer une commande si aucune n'existe
     print("\n2. Commandes dans la base")
     orders = Order.objects.all()
+    if not orders.exists():
+        # Créer un utilisateur client
+        client, _ = AuthUser.objects.get_or_create(username='client', defaults={'email': 'client@example.com'})
+        client.set_password('client123')
+        client.save()
+
+        # Créer catégorie et produit minimal
+        cat, _ = ProductCategory.objects.get_or_create(name='Général')
+        prod, _ = Product.objects.get_or_create(name='Produit test', defaults={'price': 10, 'category': cat, 'stock': 100})
+
+        # Créer la commande
+        order = Order.objects.create(user=client, total_amount=10, status='PENDING', payment_status='PENDING')
+        orders = Order.objects.all()
     if orders.exists():
         for order in orders:
             print(f"   - Commande #{order.id}: {order.user.username if order.user else 'N/A'} - {order.status} - {order.payment_status}")
@@ -38,9 +51,15 @@ def test_admin_actions():
         print("   Aucune commande trouvée")
         return
     
-    # 3. Tester la connexion admin
+    # 3. Créer/Tester la connexion admin
     print("\n3. Test connexion admin")
     try:
+        # S'assurer qu'un admin existe et a le bon mot de passe
+        admin = admin_users.first() or AuthUser.objects.create_user(username='admin', email='admin@example.com', password='admin123')
+        admin.is_staff = True
+        admin.is_superuser = True
+        admin.set_password('admin123')
+        admin.save()
         login_data = {
             'username': admin_users.first().username,
             'password': 'admin123'  # Mot de passe par défaut
@@ -64,7 +83,7 @@ def test_admin_actions():
             # Test confirmation
             print(f"   Test confirmation commande #{test_order.id}...")
             confirm_response = requests.post(
-                f'http://localhost:8000/admin/orders/{test_order.id}/confirm/',
+                f'http://localhost:8000/api/admin/orders/{test_order.id}/confirm/',
                 headers=headers
             )
             print(f"   Réponse confirmation: {confirm_response.status_code}")
@@ -79,7 +98,7 @@ def test_admin_actions():
             # Test expédition
             print(f"   Test expédition commande #{test_order.id}...")
             ship_response = requests.post(
-                f'http://localhost:8000/admin/orders/{test_order.id}/ship/',
+                f'http://localhost:8000/api/admin/orders/{test_order.id}/ship/',
                 headers=headers
             )
             print(f"   Réponse expédition: {ship_response.status_code}")
@@ -93,7 +112,7 @@ def test_admin_actions():
             # Test livraison
             print(f"   Test livraison commande #{test_order.id}...")
             deliver_response = requests.post(
-                f'http://localhost:8000/admin/orders/{test_order.id}/deliver/',
+                f'http://localhost:8000/api/admin/orders/{test_order.id}/deliver/',
                 headers=headers
             )
             print(f"   Réponse livraison: {deliver_response.status_code}")
@@ -134,7 +153,7 @@ def main():
     
     # Vérifier que le backend fonctionne
     try:
-        response = requests.get('http://localhost:8000/api/', timeout=5)
+        response = requests.get('http://localhost:8000/docs/', timeout=5)
         if response.status_code == 200:
             print("✅ Backend accessible")
             test_admin_actions()

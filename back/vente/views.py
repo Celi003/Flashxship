@@ -18,6 +18,22 @@ from .serializers import (
 from .permissions import IsAdminOrReadOnly
 from .authentication import JWTAuthentication
 import stripe
+import importlib
+# Certaines versions de stripe ne chargent pas automatiquement certains sous-modules
+try:
+    import stripe.checkout as stripe_checkout
+except Exception:
+    stripe_checkout = importlib.import_module('stripe.checkout')
+
+# S'assurer que stripe._secret est bien importé et attaché
+try:
+    stripe_secret_mod = importlib.import_module('stripe._secret')
+    # Attacher sur le module principal au cas où il serait None
+    if getattr(stripe, '_secret', None) is None:
+        setattr(stripe, '_secret', stripe_secret_mod)
+except Exception:
+    # On ignore en cas d'échec, Stripe lèvera une erreur exploitable sinon
+    pass
 from django.conf import settings
 import os
 import jwt
@@ -515,6 +531,7 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
+@authentication_classes([JWTAuthentication])
 def create_payment_session(request):
     """Créer une session de paiement Stripe pour une commande"""
     try:
@@ -558,19 +575,41 @@ def create_payment_session(request):
                     'quantity': item.quantity * item.rental_days,
                 })
         
-        # Créer la session Stripe
-        session = stripe.checkout.Session.create(
-            payment_method_types=['card'],
-            line_items=line_items,
-            mode='payment',
-            success_url=f'{settings.FRONTEND_URL}/success?session_id={{CHECKOUT_SESSION_ID}}',
-            cancel_url=f'{settings.FRONTEND_URL}/orders',
-            customer_email=request.user.email,
-            metadata={
+        # Vérifier qu'il y a bien des articles à payer
+        if not line_items:
+            return Response({'error': 'Order has no payable items'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Construire les paramètres de session
+        session_kwargs = {
+            'payment_method_types': ['card'],
+            'line_items': line_items,
+            'mode': 'payment',
+            'success_url': f"{settings.FRONTEND_URL}/success?session_id={{CHECKOUT_SESSION_ID}}",
+            'cancel_url': f"{settings.FRONTEND_URL}/orders",
+            'metadata': {
                 'order_id': order.id,
                 'user_id': request.user.id,
-            }
-        )
+            },
+        }
+        if getattr(request.user, 'email', None):
+            session_kwargs['customer_email'] = request.user.email
+
+        # Créer la session Stripe via le sous-module explicitement importé, avec reprise si _secret manque
+        try:
+            session = stripe_checkout.Session.create(**session_kwargs)
+        except AttributeError as e:
+            # Erreur connue dans certains environnements: stripe._secret est None
+            if 'Secret' in str(e):
+                try:
+                    secret_mod = importlib.import_module('stripe._secret')
+                    setattr(stripe, '_secret', secret_mod)
+                except Exception:
+                    # On laisse remonter l'erreur au deuxième essai
+                    pass
+                # Second essai après import explicite
+                session = stripe_checkout.Session.create(**session_kwargs)
+            else:
+                raise
         
         # Sauvegarder l'ID de session
         order.stripe_session_id = session.id
@@ -615,6 +654,7 @@ def stripe_webhook(request):
 
     return Response({'status': 'success'})
 
+
 # Nouvelles vues pour la gestion des commandes
 @api_view(['POST'])
 @permission_classes([IsAdminOrReadOnly])
@@ -625,12 +665,13 @@ def confirm_order(request, order_id):
         order.save()
         
         # Envoyer un email de confirmation au client
-        if order.recipient_email:
+        recipient = order.recipient_email or (order.user.email if order.user and order.user.email else None)
+        if recipient:
             send_mail(
                 'Commande confirmée - FLASHXSHIP',
                 f'Votre commande #{order.id} a été confirmée. Nous vous tiendrons informé de son avancement.',
-                'noreply@flashxship.co',
-                [order.recipient_email],
+                getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@flashxship.co'),
+                [recipient],
                 fail_silently=True,
             )
         
@@ -647,12 +688,13 @@ def reject_order(request, order_id):
         order.save()
         
         # Envoyer un email de rejet au client
-        if order.recipient_email:
+        recipient = order.recipient_email or (order.user.email if order.user and order.user.email else None)
+        if recipient:
             send_mail(
                 'Commande rejetée - FLASHXSHIP',
-                f'Votre commande #{order.id} a été rejetée. Veuillez nous contacter pour plus d\'informations.',
-                'noreply@flashxship.co',
-                [order.recipient_email],
+                f"Votre commande #{order.id} a été rejetée. Veuillez nous contacter pour plus d'informations.",
+                getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@flashxship.co'),
+                [recipient],
                 fail_silently=True,
             )
         
@@ -668,6 +710,17 @@ def ship_order(request, order_id):
         order.status = 'SHIPPED'
         order.save()
         
+        # Envoyer un email d'expédition
+        recipient = order.recipient_email or (order.user.email if order.user and order.user.email else None)
+        if recipient:
+            send_mail(
+                'Commande expédiée - FLASHXSHIP',
+                f'Votre commande #{order.id} a été expédiée. Elle est en cours d\'acheminement.',
+                getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@flashxship.co'),
+                [recipient],
+                fail_silently=True,
+            )
+        
         return Response({'message': 'Commande expédiée'})
     except Order.DoesNotExist:
         return Response({'error': 'Commande non trouvée'}, status=404)
@@ -681,12 +734,13 @@ def deliver_order(request, order_id):
         order.save()
         
         # Envoyer un email de livraison au client
-        if order.recipient_email:
+        recipient = order.recipient_email or (order.user.email if order.user and order.user.email else None)
+        if recipient:
             send_mail(
                 'Commande livrée - FLASHXSHIP',
                 f'Votre commande #{order.id} a été livrée. Merci de votre confiance !',
-                'noreply@flashxship.co',
-                [order.recipient_email],
+                getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@flashxship.co'),
+                [recipient],
                 fail_silently=True,
             )
         
@@ -696,7 +750,7 @@ def deliver_order(request, order_id):
 
 # Nouvelles vues pour la gestion des messages
 @api_view(['GET'])
-@permission_classes([IsAdminOrReadOnly])
+@permission_classes([IsAdminUser])
 @authentication_classes([JWTAuthentication])
 def admin_messages(request):
     messages = ContactMessage.objects.all().order_by('-created_at')
@@ -704,7 +758,7 @@ def admin_messages(request):
     return Response(serializer.data)
 
 @api_view(['POST'])
-@permission_classes([IsAdminOrReadOnly])
+@permission_classes([IsAdminUser])
 @authentication_classes([JWTAuthentication])
 def respond_to_message(request, message_id):
     try:
@@ -723,9 +777,9 @@ def respond_to_message(request, message_id):
         send_mail(
             f'Réponse à votre message: {message.subject}',
             f'Bonjour {message.name},\n\n{response_text}\n\nCordialement,\nL\'équipe FLASHXSHIP',
-            'noreply@flashxship.co',
+            getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@flashxship.co'),
             [message.email],
-            fail_silently=True,
+            fail_silently=not getattr(settings, 'DEBUG', False),
         )
         
         return Response({'message': 'Réponse envoyée'})

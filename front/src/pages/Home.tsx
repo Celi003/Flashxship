@@ -37,11 +37,11 @@ const Home: React.FC = () => {
       title: 'Location flexible',
       description: 'Louez des équipements spécialisés selon vos besoins avec des tarifs compétitifs'
     },
-         {
-       icon: <ShippingIcon sx={{ fontSize: 40, color: 'primary.main' }} />,
-       title: 'Livraison express',
-       description: 'Livraison dans toute la France avec suivi en temps réel'
-     },
+    {
+      icon: <ShippingIcon sx={{ fontSize: 40, color: 'primary.main' }} />,
+      title: 'Livraison express',
+      description: 'Livraison dans toute la France avec suivi en temps réel'
+    },
     {
       icon: <SecurityIcon sx={{ fontSize: 40, color: 'primary.main' }} />,
       title: 'Garantie qualité',
@@ -49,34 +49,34 @@ const Home: React.FC = () => {
     }
   ];
 
-     const testimonials = [
-     {
-       name: 'Jean Dupont',
-       company: 'Entreprise Construction',
-       rating: 5,
-       comment: 'Service exceptionnel ! Les équipements sont de qualité et la livraison est rapide.'
-     },
-     {
-       name: 'Marie Martin',
-       company: 'Société BTP',
-       rating: 5,
-       comment: 'FlashxShip est devenu notre partenaire de confiance pour tous nos projets.'
-     },
-     {
-       name: 'Pierre Durand',
-       company: 'Groupe Projet',
-       rating: 5,
-       comment: 'Prix compétitifs et service client remarquable. Je recommande vivement !'
-     }
-   ];
+  const testimonials = [
+    {
+      name: 'Jean Dupont',
+      company: 'Entreprise Construction',
+      rating: 5,
+      comment: 'Service exceptionnel ! Les équipements sont de qualité et la livraison est rapide.'
+    },
+    {
+      name: 'Marie Martin',
+      company: 'Société BTP',
+      rating: 5,
+      comment: 'FlashxShip est devenu notre partenaire de confiance pour tous nos projets.'
+    },
+    {
+      name: 'Pierre Durand',
+      company: 'Groupe Projet',
+      rating: 5,
+      comment: 'Prix compétitifs et service client remarquable. Je recommande vivement !'
+    }
+  ];
 
   return (
     <Box>
-             {/* Debug Component - À retirer en production */}
-       {/* <Container maxWidth="xl" sx={{ py: 2 }}>
+      {/* Debug Component - À retirer en production */}
+      {/* <Container maxWidth="xl" sx={{ py: 2 }}>
          <StorageDebug />
        </Container> */}
-      
+
       {/* Hero Section */}
       <Box
         sx={{
@@ -163,10 +163,10 @@ const Home: React.FC = () => {
                       <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         {feature.icon}
                         <Box>
-                          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'white' }}>
                             {feature.title}
                           </Typography>
-                          <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                          <Typography variant="body2" sx={{ color: 'black' }}>
                             {feature.description}
                           </Typography>
                         </Box>
@@ -198,7 +198,7 @@ const Home: React.FC = () => {
           </Typography>
         </motion.div>
 
-        <Grid container spacing={4}>
+        <Grid container spacing={{ xs: 2, sm: 3, md: 4 }}>
           {features.map((feature, index) => (
             <Grid item xs={12} sm={6} md={3} key={index}>
               <motion.div
@@ -252,7 +252,7 @@ const Home: React.FC = () => {
             <Typography variant="h3" component="h2" sx={{ mb: 4, fontWeight: 700, textAlign: 'center' }}>
               Ce que disent nos clients
             </Typography>
-            
+
             <Grid container spacing={4}>
               <Grid item xs={12} md={4}>
                 <motion.div
@@ -263,7 +263,7 @@ const Home: React.FC = () => {
                 >
                   <Card sx={{ p: 3, height: '100%', textAlign: 'center' }}>
                     <Typography variant="body1" sx={{ mb: 2, fontStyle: 'italic' }}>
-                      "FlashxShip nous a fourni des équipements de qualité pour notre chantier. 
+                      "FlashxShip nous a fourni des équipements de qualité pour notre chantier.
                       Service impeccable et livraison dans les délais."
                     </Typography>
                     <Typography variant="h6" sx={{ fontWeight: 600 }}>
@@ -275,7 +275,7 @@ const Home: React.FC = () => {
                   </Card>
                 </motion.div>
               </Grid>
-              
+
               <Grid item xs={12} md={4}>
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -296,7 +296,7 @@ const Home: React.FC = () => {
                   </Card>
                 </motion.div>
               </Grid>
-              
+
               <Grid item xs={12} md={4}>
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -336,7 +336,7 @@ const Home: React.FC = () => {
                 background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
                 color: 'white',
                 textAlign: 'center',
-                p: 6
+                p: { xs: 3, sm: 4, md: 6 }
               }}
             >
               <Typography variant="h4" component="h2" sx={{ mb: 3, fontWeight: 700 }}>

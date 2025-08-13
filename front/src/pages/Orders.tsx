@@ -49,9 +49,10 @@ const Orders: React.FC = () => {
       // Rediriger vers Stripe Checkout
       window.location.href = data.url;
     },
-    onError: (error) => {
-      toast.error('Erreur lors de la création de la session de paiement');
-      console.error('Payment session error:', error);
+    onError: (error: any) => {
+      const msg = error?.response?.data?.error || 'Erreur lors de la création de la session de paiement';
+      toast.error(msg);
+      console.error('Payment session error:', error?.response?.data || error);
     }
   });
 
@@ -60,8 +61,8 @@ const Orders: React.FC = () => {
   };
 
   // Extract orders array from response
-  const orders = Array.isArray(ordersResponse) ? ordersResponse : 
-                 (ordersResponse as any)?.results || ordersResponse || [];
+  const orders = Array.isArray(ordersResponse) ? ordersResponse :
+    (ordersResponse as any)?.results || ordersResponse || [];
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('fr-FR', {
@@ -170,7 +171,7 @@ const Orders: React.FC = () => {
                 Aucune commande
               </Typography>
               <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-                Vous n'avez pas encore passé de commande. 
+                Vous n'avez pas encore passé de commande.
                 Commencez par explorer nos produits et équipements !
               </Typography>
             </CardContent>
@@ -277,7 +278,7 @@ const Orders: React.FC = () => {
                         color={order.payment_status === 'PAID' ? 'success' : 'warning'}
                         size="small"
                       />
-                      
+
                       {order.payment_status === 'PENDING' && (
                         <Button
                           variant="contained"

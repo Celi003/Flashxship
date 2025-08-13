@@ -26,13 +26,13 @@ urlpatterns = [
     path('create_payment_session/', views.create_payment_session, name='create_payment_session'),
     path('stripe-webhook/', views.stripe_webhook, name='stripe_webhook'),
     
-    # Admin
-    path('admin/orders/<int:order_id>/confirm/', views.confirm_order, name='confirm_order'),
-    path('admin/orders/<int:order_id>/reject/', views.reject_order, name='reject_order'),
-    path('admin/orders/<int:order_id>/ship/', views.ship_order, name='ship_order'),
-    path('admin/orders/<int:order_id>/deliver/', views.deliver_order, name='deliver_order'),
-    path('admin/messages/', views.admin_messages, name='admin_messages'),
-    path('admin/messages/<int:message_id>/respond/', views.respond_to_message, name='respond_to_message'),
+    # Admin (API)
+    path('api/admin/orders/<int:order_id>/confirm/', views.confirm_order, name='confirm_order'),
+    path('api/admin/orders/<int:order_id>/reject/', views.reject_order, name='reject_order'),
+    path('api/admin/orders/<int:order_id>/ship/', views.ship_order, name='ship_order'),
+    path('api/admin/orders/<int:order_id>/deliver/', views.deliver_order, name='deliver_order'),
+    path('api/admin/messages/', views.admin_messages, name='admin_messages'),
+    path('api/admin/messages/<int:message_id>/respond/', views.respond_to_message, name='respond_to_message'),
     
     # Contact
     path('contact/', views.contact, name='contact'),

@@ -1,4 +1,4 @@
-import { createTheme } from '@mui/material/styles';
+import { createTheme, responsiveFontSizes } from '@mui/material/styles';
 
 // Palette de couleurs FLASHXSHIP
 const flashxshipColors = {
@@ -231,5 +231,7 @@ export const theme = createTheme({
     '0 48px 96px rgba(0,0,0,0.52)',
   ],
 });
+// Activer des tailles de polices responsives (réduit uniquement sur petits écrans, n'affecte pas le desktop)
+const responsiveTheme = responsiveFontSizes(theme);
 
-export default theme; 
+export default responsiveTheme;

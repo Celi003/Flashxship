@@ -32,13 +32,13 @@ const Footer: React.FC = () => {
       }}
     >
       <Container maxWidth="lg">
-        <Grid container spacing={4}>
+        <Grid container spacing={{ xs: 3, sm: 4 }}>
           {/* Logo et description */}
           <Grid item xs={12} md={4}>
-            <Typography 
-              variant="h4" 
-              sx={{ 
-                fontWeight: 700, 
+            <Typography
+              variant="h4"
+              sx={{
+                fontWeight: 700,
                 mb: 2,
                 fontFamily: '"Playfair Display", serif',
                 letterSpacing: '0.1em'
@@ -47,38 +47,38 @@ const Footer: React.FC = () => {
               FLASHXSHIP
             </Typography>
             <Typography variant="body2" sx={{ mb: 3, lineHeight: 1.6 }}>
-              Votre partenaire de confiance pour l'achat et la location d'équipements professionnels. 
+              Votre partenaire de confiance pour l'achat et la location d'équipements professionnels.
               Qualité, fiabilité et service client au cœur de notre engagement.
             </Typography>
-            
+
             {/* Réseaux sociaux */}
             <Box sx={{ display: 'flex', gap: 1 }}>
-              <IconButton 
-                sx={{ 
+              <IconButton
+                sx={{
                   color: theme.palette.grey[300],
                   '&:hover': { color: theme.palette.common.white }
                 }}
               >
                 <FacebookIcon />
               </IconButton>
-              <IconButton 
-                sx={{ 
+              <IconButton
+                sx={{
                   color: theme.palette.grey[300],
                   '&:hover': { color: theme.palette.common.white }
                 }}
               >
                 <TwitterIcon />
               </IconButton>
-              <IconButton 
-                sx={{ 
+              <IconButton
+                sx={{
                   color: theme.palette.grey[300],
                   '&:hover': { color: theme.palette.common.white }
                 }}
               >
                 <InstagramIcon />
               </IconButton>
-              <IconButton 
-                sx={{ 
+              <IconButton
+                sx={{
                   color: theme.palette.grey[300],
                   '&:hover': { color: theme.palette.common.white }
                 }}
@@ -94,40 +94,40 @@ const Footer: React.FC = () => {
               Services
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <Link 
-                href="/products" 
-                color="inherit" 
-                sx={{ 
+              <Link
+                href="/products"
+                color="inherit"
+                sx={{
                   textDecoration: 'none',
                   '&:hover': { color: theme.palette.common.white }
                 }}
               >
                 Vente d'équipements
               </Link>
-              <Link 
-                href="/equipment" 
-                color="inherit" 
-                sx={{ 
+              <Link
+                href="/equipment"
+                color="inherit"
+                sx={{
                   textDecoration: 'none',
                   '&:hover': { color: theme.palette.common.white }
                 }}
               >
                 Location d'équipements
               </Link>
-              <Link 
-                href="/contact" 
-                color="inherit" 
-                sx={{ 
+              <Link
+                href="/contact"
+                color="inherit"
+                sx={{
                   textDecoration: 'none',
                   '&:hover': { color: theme.palette.common.white }
                 }}
               >
                 Service client
               </Link>
-              <Link 
-                href="/contact" 
-                color="inherit" 
-                sx={{ 
+              <Link
+                href="/contact"
+                color="inherit"
+                sx={{
                   textDecoration: 'none',
                   '&:hover': { color: theme.palette.common.white }
                 }}
@@ -143,40 +143,40 @@ const Footer: React.FC = () => {
               Support
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <Link 
-                href="/contact" 
-                color="inherit" 
-                sx={{ 
+              <Link
+                href="/contact"
+                color="inherit"
+                sx={{
                   textDecoration: 'none',
                   '&:hover': { color: theme.palette.common.white }
                 }}
               >
                 Contact
               </Link>
-              <Link 
-                href="/contact" 
-                color="inherit" 
-                sx={{ 
+              <Link
+                href="/contact"
+                color="inherit"
+                sx={{
                   textDecoration: 'none',
                   '&:hover': { color: theme.palette.common.white }
                 }}
               >
                 FAQ
               </Link>
-              <Link 
-                href="/contact" 
-                color="inherit" 
-                sx={{ 
+              <Link
+                href="/contact"
+                color="inherit"
+                sx={{
                   textDecoration: 'none',
                   '&:hover': { color: theme.palette.common.white }
                 }}
               >
                 Assistance technique
               </Link>
-              <Link 
-                href="/contact" 
-                color="inherit" 
-                sx={{ 
+              <Link
+                href="/contact"
+                color="inherit"
+                sx={{
                   textDecoration: 'none',
                   '&:hover': { color: theme.palette.common.white }
                 }}
@@ -216,9 +216,9 @@ const Footer: React.FC = () => {
         </Grid>
 
         {/* Copyright */}
-        <Box sx={{ 
-          borderTop: `1px solid ${theme.palette.grey[700]}`, 
-          mt: 4, 
+        <Box sx={{
+          borderTop: `1px solid ${theme.palette.grey[700]}`,
+          mt: 4,
           pt: 3,
           textAlign: 'center'
         }}>

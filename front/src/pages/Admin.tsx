@@ -59,10 +59,10 @@ import {
 } from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { 
-  productService, 
-  productCategoryService, 
-  equipmentService, 
+import {
+  productService,
+  productCategoryService,
+  equipmentService,
   equipmentCategoryService,
   orderService,
   contactService
@@ -99,7 +99,7 @@ const Admin: React.FC = () => {
   const [openEquipmentCategoryDialog, setOpenEquipmentCategoryDialog] = useState(false);
   const [openProductDialog, setOpenProductDialog] = useState(false);
   const [openEquipmentDialog, setOpenEquipmentDialog] = useState(false);
-  
+
   // Form states
   const [productCategoryForm, setProductCategoryForm] = useState({ name: '', description: '' });
   const [equipmentCategoryForm, setEquipmentCategoryForm] = useState({ name: '', description: '' });
@@ -126,6 +126,13 @@ const Admin: React.FC = () => {
   const [editingEquipment, setEditingEquipment] = useState<Equipment | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{ type: string; id: number; name: string } | null>(null);
+  // Détails commande
+  const [orderDetailsOpen, setOrderDetailsOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  // Réponse aux messages de contact
+  const [respondDialogOpen, setRespondDialogOpen] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
+  const [responseText, setResponseText] = useState('');
 
   // Fetch data
   const { data: productCategoriesResponse } = useQuery({
@@ -166,6 +173,32 @@ const Admin: React.FC = () => {
   const equipment = Array.isArray(equipmentResponse) ? equipmentResponse : (equipmentResponse as any)?.results || [];
   const orders = Array.isArray(ordersResponse) ? ordersResponse : (ordersResponse as any)?.results || [];
   const contactMessages = Array.isArray(contactMessagesResponse) ? contactMessagesResponse : (contactMessagesResponse as any)?.results || [];
+
+  // Mutation pour répondre à un message
+  const respondMessageMutation = useMutation({
+    mutationFn: ({ messageId, response }: { messageId: number; response: string }) => contactService.respond(messageId, response),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contact-messages'] });
+      setRespondDialogOpen(false);
+      setResponseText('');
+      setSelectedMessage(null);
+      toast.success('Réponse envoyée par email');
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.error || 'Erreur lors de l\'envoi de la réponse');
+    }
+  });
+
+  const handleOpenRespond = (message: ContactMessage) => {
+    setSelectedMessage(message);
+    setResponseText(message.admin_response || '');
+    setRespondDialogOpen(true);
+  };
+
+  const handleSendResponse = () => {
+    if (!selectedMessage) return;
+    respondMessageMutation.mutate({ messageId: selectedMessage.id, response: responseText });
+  };
 
   // Mutations
   const createProductCategoryMutation = useMutation({
@@ -256,7 +289,7 @@ const Admin: React.FC = () => {
   const updateProductCategoryMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: FormData }) => productCategoryService.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['productCategories'] });
+      queryClient.invalidateQueries({ queryKey: ['product-categories'] });
       setEditingProductCategory(null);
       toast.success('Catégorie de produit modifiée avec succès');
     },
@@ -269,7 +302,7 @@ const Admin: React.FC = () => {
   const updateEquipmentCategoryMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: FormData }) => equipmentCategoryService.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['equipmentCategories'] });
+      queryClient.invalidateQueries({ queryKey: ['equipment-categories'] });
       setEditingEquipmentCategory(null);
       toast.success('Catégorie d\'équipement modifiée avec succès');
     },
@@ -309,7 +342,7 @@ const Admin: React.FC = () => {
   const deleteProductCategoryMutation = useMutation({
     mutationFn: (id: number) => productCategoryService.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['productCategories'] });
+      queryClient.invalidateQueries({ queryKey: ['product-categories'] });
       setDeleteDialogOpen(false);
       setItemToDelete(null);
       toast.success('Catégorie de produit supprimée avec succès');
@@ -323,7 +356,7 @@ const Admin: React.FC = () => {
   const deleteEquipmentCategoryMutation = useMutation({
     mutationFn: (id: number) => equipmentCategoryService.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['equipmentCategories'] });
+      queryClient.invalidateQueries({ queryKey: ['equipment-categories'] });
       setDeleteDialogOpen(false);
       setItemToDelete(null);
       toast.success('Catégorie d\'équipement supprimée avec succès');
@@ -424,27 +457,27 @@ const Admin: React.FC = () => {
   // Fonctions pour soumettre les modifications
   const handleUpdateProductCategory = () => {
     if (!editingProductCategory) return;
-    
+
     const formData = new FormData();
     formData.append('name', productCategoryForm.name);
     formData.append('description', productCategoryForm.description);
-    
+
     updateProductCategoryMutation.mutate({ id: editingProductCategory.id, data: formData });
   };
 
   const handleUpdateEquipmentCategory = () => {
     if (!editingEquipmentCategory) return;
-    
+
     const formData = new FormData();
     formData.append('name', equipmentCategoryForm.name);
     formData.append('description', equipmentCategoryForm.description);
-    
+
     updateEquipmentCategoryMutation.mutate({ id: editingEquipmentCategory.id, data: formData });
   };
 
   const handleUpdateProduct = () => {
     if (!editingProduct) return;
-    
+
     const formData = new FormData();
     formData.append('name', productForm.name);
     formData.append('description', productForm.description);
@@ -454,13 +487,13 @@ const Admin: React.FC = () => {
     if (productForm.image) {
       formData.append('image_files', productForm.image);
     }
-    
+
     updateProductMutation.mutate({ id: editingProduct.id, data: formData });
   };
 
   const handleUpdateEquipment = () => {
     if (!editingEquipment) return;
-    
+
     const formData = new FormData();
     formData.append('name', equipmentForm.name);
     formData.append('description', equipmentForm.description);
@@ -469,7 +502,7 @@ const Admin: React.FC = () => {
     if (equipmentForm.image) {
       formData.append('image_files', equipmentForm.image);
     }
-    
+
     updateEquipmentMutation.mutate({ id: editingEquipment.id, data: formData });
   };
 
@@ -493,26 +526,26 @@ const Admin: React.FC = () => {
   const handleToggleAvailability = async (equipmentId: number, currentAvailable: boolean) => {
     try {
       const newAvailable = !currentAvailable;
-      
+
       // Récupérer l'équipement existant pour avoir tous les champs
       const equipmentToUpdate = equipment.find((e: any) => e.id === equipmentId);
       if (!equipmentToUpdate) {
         toast.error('Équipement non trouvé');
         return;
       }
-      
+
       const formData = new FormData();
       formData.append('name', equipmentToUpdate.name);
       formData.append('description', equipmentToUpdate.description || '');
       formData.append('rental_price_per_day', equipmentToUpdate.rental_price_per_day.toString());
       formData.append('category_id', equipmentToUpdate.category.id.toString());
       formData.append('available', newAvailable.toString());
-      
+
       await equipmentService.update(equipmentId, formData);
-      
+
       // Invalider et recharger les données
       queryClient.invalidateQueries({ queryKey: ['equipment'] });
-      
+
       toast.success(`Équipement marqué comme ${newAvailable ? 'disponible' : 'indisponible'}`);
     } catch (error) {
       console.error('Erreur lors du changement de disponibilité:', error);
@@ -666,7 +699,7 @@ const Admin: React.FC = () => {
             Ajouter une catégorie de produit
           </Button>
         </Box>
-        
+
         <Grid container spacing={3}>
           {Array.isArray(productCategories) && productCategories.map((category: any) => (
             <Grid item xs={12} sm={6} md={4} key={category.id}>
@@ -720,7 +753,7 @@ const Admin: React.FC = () => {
             Ajouter une catégorie d'équipement
           </Button>
         </Box>
-        
+
         <Grid container spacing={3}>
           {Array.isArray(equipmentCategories) && equipmentCategories.map((category: any) => (
             <Grid item xs={12} sm={6} md={4} key={category.id}>
@@ -774,7 +807,7 @@ const Admin: React.FC = () => {
             Ajouter un produit
           </Button>
         </Box>
-        
+
         {/* Debug: Affichage des données des produits */}
         {products.length > 0 && (
           <Box sx={{ mb: 3, p: 2, border: '2px dashed #ccc', borderRadius: 2, backgroundColor: '#f5f5f5' }}>
@@ -804,7 +837,7 @@ const Admin: React.FC = () => {
             ))}
           </Box>
         )}
-        
+
         <Grid container spacing={3}>
           {Array.isArray(products) && products.map((product: any) => (
             <Grid item xs={12} sm={6} md={4} key={product.id}>
@@ -888,88 +921,88 @@ const Admin: React.FC = () => {
         </Grid>
       </TabPanel>
 
-             {/* Equipment Tab */}
-       <TabPanel value={tabValue} index={3}>
-         <Box sx={{ mb: 3 }}>
-           <Button
-             variant="contained"
-             startIcon={<AddIcon />}
-             onClick={() => setOpenEquipmentDialog(true)}
-           >
-             Ajouter un équipement
-           </Button>
-         </Box>
-         
-         <Grid container spacing={3}>
-           {Array.isArray(equipment) && equipment.map((equip: any) => (
-             <Grid item xs={12} sm={6} md={4} key={equip.id}>
-               <Card>
-                 <CardContent>
-                   {/* Image de l'équipement */}
-                   {equip.images && equip.images.length > 0 ? (
-                     <Box sx={{ mb: 2, textAlign: 'center' }}>
-                       <img
-                         src={equip.images[0].image_url || `http://localhost:8000${equip.images[0].image}`}
-                         alt={equip.name}
-                         style={{
-                           width: '100%',
-                           height: '150px',
-                           objectFit: 'cover',
-                           borderRadius: '8px'
-                         }}
-                         onError={(e) => {
-                           console.log('❌ Image error for equipment:', equip.name, 'Image path:', equip.images[0].image);
-                           (e.target as HTMLImageElement).src = 'https://via.placeholder.com/300x150/cccccc/666666?text=Image+non+disponible';
-                         }}
-                         onLoad={(e) => {
-                           console.log('✅ Image loaded successfully for equipment:', equip.name, 'URL:', equip.images[0].image);
-                         }}
-                       />
-                     </Box>
-                   ) : (
-                     <Box sx={{ mb: 2, textAlign: 'center' }}>
-                       <img
-                         src="https://via.placeholder.com/300x150/cccccc/666666?text=Aucune+image"
-                         alt="Aucune image"
-                         style={{
-                           width: '100%',
-                           height: '150px',
-                           objectFit: 'cover',
-                           borderRadius: '8px'
-                         }}
-                       />
-                     </Box>
-                   )}
-                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                     <Box sx={{ flex: 1 }}>
-                       <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                         {equip.name}
-                       </Typography>
-                       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                         {equip.description}
-                       </Typography>
-                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                         <Typography variant="h6" color="primary">
-                           {formatPrice(equip.rental_price_per_day)}/jour
-                         </Typography>
-                         <Chip 
-                           label={equip.available ? 'Disponible' : 'Indisponible'} 
-                           color={equip.available ? 'success' : 'error'}
-                           size="small"
-                         />
-                       </Box>
-                     </Box>
-                     <Box sx={{ display: 'flex', gap: 1 }}>
-                       <Tooltip title="Modifier">
-                         <IconButton
-                           size="small"
-                           onClick={() => handleEditEquipment(equip)}
-                           color="primary"
-                         >
-                           <EditIcon />
-                         </IconButton>
-                       </Tooltip>
-                                             <Tooltip title="Changer disponibilité">
+      {/* Equipment Tab */}
+      <TabPanel value={tabValue} index={3}>
+        <Box sx={{ mb: 3 }}>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setOpenEquipmentDialog(true)}
+          >
+            Ajouter un équipement
+          </Button>
+        </Box>
+
+        <Grid container spacing={3}>
+          {Array.isArray(equipment) && equipment.map((equip: any) => (
+            <Grid item xs={12} sm={6} md={4} key={equip.id}>
+              <Card>
+                <CardContent>
+                  {/* Image de l'équipement */}
+                  {equip.images && equip.images.length > 0 ? (
+                    <Box sx={{ mb: 2, textAlign: 'center' }}>
+                      <img
+                        src={equip.images[0].image_url || `http://localhost:8000${equip.images[0].image}`}
+                        alt={equip.name}
+                        style={{
+                          width: '100%',
+                          height: '150px',
+                          objectFit: 'cover',
+                          borderRadius: '8px'
+                        }}
+                        onError={(e) => {
+                          console.log('❌ Image error for equipment:', equip.name, 'Image path:', equip.images[0].image);
+                          (e.target as HTMLImageElement).src = 'https://via.placeholder.com/300x150/cccccc/666666?text=Image+non+disponible';
+                        }}
+                        onLoad={(e) => {
+                          console.log('✅ Image loaded successfully for equipment:', equip.name, 'URL:', equip.images[0].image);
+                        }}
+                      />
+                    </Box>
+                  ) : (
+                    <Box sx={{ mb: 2, textAlign: 'center' }}>
+                      <img
+                        src="https://via.placeholder.com/300x150/cccccc/666666?text=Aucune+image"
+                        alt="Aucune image"
+                        style={{
+                          width: '100%',
+                          height: '150px',
+                          objectFit: 'cover',
+                          borderRadius: '8px'
+                        }}
+                      />
+                    </Box>
+                  )}
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        {equip.name}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                        {equip.description}
+                      </Typography>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Typography variant="h6" color="primary">
+                          {formatPrice(equip.rental_price_per_day)}/jour
+                        </Typography>
+                        <Chip
+                          label={equip.available ? 'Disponible' : 'Indisponible'}
+                          color={equip.available ? 'success' : 'error'}
+                          size="small"
+                        />
+                      </Box>
+                    </Box>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Tooltip title="Modifier">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleEditEquipment(equip)}
+                          color="primary"
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Changer disponibilité">
                         <IconButton
                           size="small"
                           onClick={() => handleToggleAvailability(equip.id, equip.available)}
@@ -987,154 +1020,268 @@ const Admin: React.FC = () => {
                           <DeleteIcon />
                         </IconButton>
                       </Tooltip>
-                     </Box>
-                   </Box>
-                 </CardContent>
-               </Card>
-             </Grid>
-           ))}
-         </Grid>
-       </TabPanel>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      </TabPanel>
 
-       {/* Orders Tab */}
-       <TabPanel value={tabValue} index={4}>
-         <Box sx={{ mb: 3 }}>
-           <Typography variant="h5" sx={{ fontWeight: 600, mb: 2 }}>
-             Gestion des Commandes
-           </Typography>
-         </Box>
-         
-         <Grid container spacing={3}>
-           <Grid item xs={12}>
-             <Card>
-               <CardContent>
-                 <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-                   Commandes ({orders.length})
-                 </Typography>
-                 {orders.length === 0 ? (
-                   <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 3 }}>
-                     Aucune commande trouvée
-                   </Typography>
-                 ) : (
-                   <List>
-                     {orders.map((order: Order) => (
-                       <React.Fragment key={order.id}>
-                         <ListItem>
-                           <ListItemText
-                             primary={`Commande #${order.id}`}
-                             secondary={`Client: ${order.user?.username || 'N/A'} - Total: ${formatPrice(order.total_amount)} - Statut: ${order.status} - Paiement: ${order.payment_status}`}
-                           />
-                           <ListItemSecondaryAction>
-                             <Box sx={{ display: 'flex', gap: 1 }}>
-                                                               <Tooltip title="Confirmer">
-                                  <IconButton 
-                                    edge="end" 
-                                    aria-label="confirm"
-                                    color="success"
-                                    size="small"
-                                    onClick={() => handleConfirmOrder(order.id)}
-                                  >
-                                    <CheckCircleIcon />
-                                  </IconButton>
-                                </Tooltip>
-                                                               <Tooltip title="Rejeter">
-                                  <IconButton 
-                                    edge="end" 
-                                    aria-label="reject"
-                                    color="error"
-                                    size="small"
-                                    onClick={() => handleRejectOrder(order.id)}
-                                  >
-                                    <CancelIcon />
-                                  </IconButton>
-                                </Tooltip>
-                                                               <Tooltip title="Expédier">
-                                  <IconButton 
-                                    edge="end" 
-                                    aria-label="ship"
-                                    color="primary"
-                                    size="small"
-                                    onClick={() => handleShipOrder(order.id)}
-                                  >
-                                    <ShipIcon />
-                                  </IconButton>
-                                </Tooltip>
-                                <Tooltip title="Livrer">
-                                  <IconButton 
-                                    edge="end" 
-                                    aria-label="deliver"
-                                    color="secondary"
-                                    size="small"
-                                    onClick={() => handleDeliverOrder(order.id)}
-                                  >
-                                    <DeliverIcon />
-                                  </IconButton>
-                                </Tooltip>
-                             </Box>
-                           </ListItemSecondaryAction>
-                         </ListItem>
-                         {order.id !== orders[orders.length - 1]?.id && <Divider />}
-                       </React.Fragment>
-                     ))}
-                   </List>
-                 )}
-               </CardContent>
-             </Card>
-           </Grid>
-         </Grid>
-       </TabPanel>
+      {/* Orders Tab */}
+      <TabPanel value={tabValue} index={4}>
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h5" sx={{ fontWeight: 600, mb: 2 }}>
+            Gestion des Commandes
+          </Typography>
+        </Box>
 
-       {/* Contacts Tab */}
-       <TabPanel value={tabValue} index={5}>
-         <Box sx={{ mb: 3 }}>
-           <Typography variant="h5" sx={{ fontWeight: 600, mb: 2 }}>
-             Messages de Contact
-           </Typography>
-         </Box>
-         
-         <Grid container spacing={3}>
-           <Grid item xs={12}>
-             <Card>
-               <CardContent>
-                 <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-                   Messages ({contactMessages.length})
-                 </Typography>
-                 {contactMessages.length === 0 ? (
-                   <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 3 }}>
-                     Aucun message trouvé
-                   </Typography>
-                 ) : (
-                   <List>
-                     {contactMessages.map((message: ContactMessage) => (
-                       <React.Fragment key={message.id}>
-                         <ListItem>
-                           <ListItemText
-                             primary={message.subject}
-                             secondary={`De: ${message.email} - Nom: ${message.name} - ${new Date(message.created_at).toLocaleDateString()}`}
-                           />
-                           <ListItemSecondaryAction>
-                             <Tooltip title="Répondre">
-                               <IconButton 
-                                 edge="end" 
-                                 aria-label="respond"
-                                 color="primary"
-                                 size="small"
-                               >
-                                 <ReplyIcon />
-                               </IconButton>
-                             </Tooltip>
-                           </ListItemSecondaryAction>
-                         </ListItem>
-                         {message.id !== contactMessages[contactMessages.length - 1]?.id && <Divider />}
-                       </React.Fragment>
-                     ))}
-                   </List>
-                 )}
-               </CardContent>
-             </Card>
-           </Grid>
-         </Grid>
-       </TabPanel>
+        <Grid container spacing={3}>
+          <Grid item xs={12}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                  Commandes ({orders.length})
+                </Typography>
+                {orders.length === 0 ? (
+                  <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 3 }}>
+                    Aucune commande trouvée
+                  </Typography>
+                ) : (
+                  <List>
+                    {orders.map((order: Order) => (
+                      <React.Fragment key={order.id}>
+                        <ListItem>
+                          <ListItemText
+                            primary={`Commande #${order.id}`}
+                            secondary={`Client: ${order.user?.username || 'N/A'} - Total: ${formatPrice(order.total_amount)} - Statut: ${order.status} - Paiement: ${order.payment_status}`}
+                          />
+                          <ListItemSecondaryAction>
+                            <Box sx={{ display: 'flex', gap: 1 }}>
+                              <Tooltip title="Voir détails">
+                                <IconButton
+                                  edge="end"
+                                  aria-label="view"
+                                  color="info"
+                                  size="small"
+                                  onClick={() => { setSelectedOrder(order); setOrderDetailsOpen(true); }}
+                                >
+                                  <ViewIcon />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Confirmer">
+                                <IconButton
+                                  edge="end"
+                                  aria-label="confirm"
+                                  color="success"
+                                  size="small"
+                                  onClick={() => handleConfirmOrder(order.id)}
+                                >
+                                  <CheckCircleIcon />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Rejeter">
+                                <IconButton
+                                  edge="end"
+                                  aria-label="reject"
+                                  color="error"
+                                  size="small"
+                                  onClick={() => handleRejectOrder(order.id)}
+                                >
+                                  <CancelIcon />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Expédier">
+                                <IconButton
+                                  edge="end"
+                                  aria-label="ship"
+                                  color="primary"
+                                  size="small"
+                                  onClick={() => handleShipOrder(order.id)}
+                                >
+                                  <ShipIcon />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Livrer">
+                                <IconButton
+                                  edge="end"
+                                  aria-label="deliver"
+                                  color="secondary"
+                                  size="small"
+                                  onClick={() => handleDeliverOrder(order.id)}
+                                >
+                                  <DeliverIcon />
+                                </IconButton>
+                              </Tooltip>
+                            </Box>
+                          </ListItemSecondaryAction>
+                        </ListItem>
+                        {order.id !== orders[orders.length - 1]?.id && <Divider />}
+                      </React.Fragment>
+                    ))}
+                  </List>
+                )}
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      </TabPanel>
+
+      {/* Détails de la commande */}
+      <Dialog open={orderDetailsOpen} onClose={() => setOrderDetailsOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Détails de la commande</DialogTitle>
+        <DialogContent dividers>
+          {selectedOrder && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                Commande #{selectedOrder.id}
+              </Typography>
+              <Typography variant="body2">
+                Client: {selectedOrder.user?.username || 'N/A'} ({selectedOrder.user?.email || '—'})
+              </Typography>
+              <Typography variant="body2">
+                Créée le: {new Date(selectedOrder.created_at).toLocaleString('fr-FR')}
+              </Typography>
+              <Typography variant="body2">
+                Statut: {selectedOrder.status} | Paiement: {selectedOrder.payment_status}
+              </Typography>
+              <Typography variant="body2">
+                Total: {formatPrice(selectedOrder.total_amount)}
+              </Typography>
+
+              <Divider />
+              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Articles</Typography>
+              <List>
+                {selectedOrder.items?.map((it) => (
+                  <ListItem key={it.id} disableGutters>
+                    <ListItemText
+                      primary={it.product ? it.product.name : it.equipment ? it.equipment.name : 'Item'}
+                      secondary={
+                        it.product
+                          ? `Produit x${it.quantity} — Prix unité: ${formatPrice(it.price)}`
+                          : `Équipement x${it.quantity} × ${it.rental_days}j — Prix/jour: ${formatPrice(it.price)}`
+                      }
+                    />
+                  </ListItem>
+                ))}
+              </List>
+
+              <Divider />
+              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Livraison</Typography>
+              <Typography variant="body2">Nécessite livraison: {selectedOrder.requires_delivery ? 'Oui' : 'Non'}</Typography>
+              {selectedOrder.requires_delivery && (
+                <Box>
+                  <Typography variant="body2">Destinataire: {selectedOrder.recipient_name || '—'}</Typography>
+                  <Typography variant="body2">Email: {selectedOrder.recipient_email || '—'}</Typography>
+                  <Typography variant="body2">Téléphone: {selectedOrder.recipient_phone || '—'}</Typography>
+                  <Typography variant="body2">Adresse: {selectedOrder.delivery_address || '—'}</Typography>
+                  <Typography variant="body2">Ville: {selectedOrder.delivery_city || '—'}</Typography>
+                  <Typography variant="body2">Code postal: {selectedOrder.delivery_postal_code || '—'}</Typography>
+                  <Typography variant="body2">Pays: {selectedOrder.delivery_country || '—'}</Typography>
+                  <Typography variant="body2">Téléphone livraison: {selectedOrder.delivery_phone || '—'}</Typography>
+                </Box>
+              )}
+
+              <Divider />
+              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Paiement</Typography>
+              <Typography variant="body2">Stripe session: {selectedOrder.stripe_session_id || '—'}</Typography>
+              <Typography variant="body2">Payment Intent: {selectedOrder.stripe_payment_intent_id || '—'}</Typography>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOrderDetailsOpen(false)}>Fermer</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Contacts Tab */}
+      <TabPanel value={tabValue} index={5}>
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h5" sx={{ fontWeight: 600, mb: 2 }}>
+            Messages de Contact
+          </Typography>
+        </Box>
+
+        <Grid container spacing={3}>
+          <Grid item xs={12}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                  Messages ({contactMessages.length})
+                </Typography>
+                {contactMessages.length === 0 ? (
+                  <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 3 }}>
+                    Aucun message trouvé
+                  </Typography>
+                ) : (
+                  <List>
+                    {contactMessages.map((message: ContactMessage) => (
+                      <React.Fragment key={message.id}>
+                        <ListItem>
+                          <ListItemText
+                            primary={message.subject}
+                            secondary={`De: ${message.email} - Nom: ${message.name} - ${new Date(message.created_at).toLocaleDateString()}`}
+                          />
+                          <ListItemSecondaryAction>
+                            <Tooltip title="Répondre">
+                              <IconButton
+                                edge="end"
+                                aria-label="respond"
+                                color="primary"
+                                size="small"
+                                onClick={() => handleOpenRespond(message)}
+                              >
+                                <ReplyIcon />
+                              </IconButton>
+                            </Tooltip>
+                          </ListItemSecondaryAction>
+                        </ListItem>
+                        {message.id !== contactMessages[contactMessages.length - 1]?.id && <Divider />}
+                      </React.Fragment>
+                    ))}
+                  </List>
+                )}
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      </TabPanel>
+
+      {/* Respond to Contact Message Dialog */}
+      <Dialog open={respondDialogOpen} onClose={() => setRespondDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Répondre au message</DialogTitle>
+        <DialogContent>
+          {selectedMessage && (
+            <Box sx={{ pt: 1 }}>
+              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                À: {selectedMessage.name} &lt;{selectedMessage.email}&gt;
+              </Typography>
+              <Typography variant="body2" sx={{ mb: 2 }}>
+                Sujet: {selectedMessage.subject}
+              </Typography>
+              <TextField
+                fullWidth
+                label="Votre réponse"
+                multiline
+                minRows={5}
+                value={responseText}
+                onChange={(e) => setResponseText(e.target.value)}
+              />
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRespondDialogOpen(false)}>Annuler</Button>
+          <Button
+            variant="contained"
+            onClick={handleSendResponse}
+            disabled={respondMessageMutation.isPending || !responseText.trim()}
+          >
+            {respondMessageMutation.isPending ? 'Envoi…' : 'Envoyer'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Product Category Dialog */}
       <Dialog open={openProductCategoryDialog} onClose={() => setOpenProductCategoryDialog(false)} maxWidth="sm" fullWidth>
@@ -1161,8 +1308,8 @@ const Admin: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenProductCategoryDialog(false)}>Annuler</Button>
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             onClick={handleCreateProductCategory}
             disabled={createProductCategoryMutation.isPending}
           >
@@ -1196,8 +1343,8 @@ const Admin: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenEquipmentCategoryDialog(false)}>Annuler</Button>
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             onClick={handleCreateEquipmentCategory}
             disabled={createEquipmentCategoryMutation.isPending}
           >
@@ -1282,8 +1429,8 @@ const Admin: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenProductDialog(false)}>Annuler</Button>
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             onClick={handleCreateProduct}
             disabled={createProductMutation.isPending}
           >
@@ -1359,8 +1506,8 @@ const Admin: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenEquipmentDialog(false)}>Annuler</Button>
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             onClick={handleCreateEquipment}
             disabled={createEquipmentMutation.isPending}
           >
@@ -1370,7 +1517,7 @@ const Admin: React.FC = () => {
       </Dialog>
 
       {/* Dialogues de modification */}
-      
+
       {/* Modification Catégorie Produit */}
       <Dialog open={!!editingProductCategory} onClose={handleCancelEdit} maxWidth="sm" fullWidth>
         <DialogTitle>Modifier la catégorie de produit</DialogTitle>
@@ -1396,8 +1543,8 @@ const Admin: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCancelEdit}>Annuler</Button>
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             onClick={handleUpdateProductCategory}
             disabled={updateProductCategoryMutation.isPending}
           >
@@ -1431,8 +1578,8 @@ const Admin: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCancelEdit}>Annuler</Button>
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             onClick={handleUpdateEquipmentCategory}
             disabled={updateEquipmentCategoryMutation.isPending}
           >
@@ -1518,8 +1665,8 @@ const Admin: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCancelEdit}>Annuler</Button>
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             onClick={handleUpdateProduct}
             disabled={updateProductMutation.isPending}
           >
@@ -1595,8 +1742,8 @@ const Admin: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCancelEdit}>Annuler</Button>
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             onClick={handleUpdateEquipment}
             disabled={updateEquipmentMutation.isPending}
           >
@@ -1615,9 +1762,9 @@ const Admin: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialogOpen(false)}>Annuler</Button>
-          <Button 
-            onClick={handleDeleteConfirm} 
-            color="error" 
+          <Button
+            onClick={handleDeleteConfirm}
+            color="error"
             variant="contained"
             disabled={
               deleteProductCategoryMutation.isPending ||
@@ -1632,7 +1779,7 @@ const Admin: React.FC = () => {
       </Dialog>
 
       {/* Dialogues de modification */}
-      
+
       {/* Modification Catégorie Produit */}
       <Dialog open={!!editingProductCategory} onClose={handleCancelEdit} maxWidth="sm" fullWidth>
         <DialogTitle>Modifier la catégorie de produit</DialogTitle>
@@ -1658,8 +1805,8 @@ const Admin: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCancelEdit}>Annuler</Button>
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             onClick={handleUpdateProductCategory}
             disabled={updateProductCategoryMutation.isPending}
           >
@@ -1693,8 +1840,8 @@ const Admin: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCancelEdit}>Annuler</Button>
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             onClick={handleUpdateEquipmentCategory}
             disabled={updateEquipmentCategoryMutation.isPending}
           >
@@ -1780,8 +1927,8 @@ const Admin: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCancelEdit}>Annuler</Button>
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             onClick={handleUpdateProduct}
             disabled={updateProductMutation.isPending}
           >
@@ -1857,8 +2004,8 @@ const Admin: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCancelEdit}>Annuler</Button>
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             onClick={handleUpdateEquipment}
             disabled={updateEquipmentMutation.isPending}
           >
@@ -1877,9 +2024,9 @@ const Admin: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialogOpen(false)}>Annuler</Button>
-          <Button 
-            onClick={handleDeleteConfirm} 
-            color="error" 
+          <Button
+            onClick={handleDeleteConfirm}
+            color="error"
             variant="contained"
             disabled={
               deleteProductCategoryMutation.isPending ||

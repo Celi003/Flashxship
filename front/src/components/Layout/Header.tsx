@@ -33,7 +33,7 @@ const Header: React.FC = () => {
   const { user, logout } = useAuth();
   const { items } = useCart();
   const navigate = useNavigate();
-  
+
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [mobileMenuAnchor, setMobileMenuAnchor] = useState<null | HTMLElement>(null);
 
@@ -67,43 +67,44 @@ const Header: React.FC = () => {
       <Toolbar sx={{ justifyContent: 'space-between' }}>
         {/* Logo et navigation principale */}
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                     <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-               <img 
-                 src="/logo.png" 
-                 alt="FLASHXSHIP Logo" 
-                 style={{ 
-                   height: '40px', 
-                   width: 'auto',
-                   objectFit: 'contain'
-                 }}
-                 onError={(e) => {
-                   // Fallback au texte si l'image ne charge pas
-                   const target = e.target as HTMLImageElement;
-                   target.style.display = 'none';
-                 }}
-               />
-               <Typography 
-                 variant="h4" 
-                 sx={{ 
-                   fontWeight: 700, 
-                   color: theme.palette.text.primary,
-                   fontFamily: '"Playfair Display", serif',
-                   letterSpacing: '0.1em'
-                 }}
-               >
-                 FLASHXSHIP
-               </Typography>
-             </Box>
-           </Link>
-          
+          <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <img
+                src="/logo.png"
+                alt="FLASHXSHIP Logo"
+                style={{
+                  height: '40px',
+                  width: 'auto',
+                  objectFit: 'contain'
+                }}
+                onError={(e) => {
+                  // Fallback au texte si l'image ne charge pas
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                }}
+              />
+              <Typography
+                variant="h4"
+                sx={{
+                  fontWeight: 700,
+                  color: theme.palette.text.primary,
+                  fontFamily: '"Playfair Display", serif',
+                  letterSpacing: '0.1em',
+                  fontSize: { xs: '1.4rem', sm: '1.6rem', md: '2rem' }
+                }}
+              >
+                FLASHXSHIP
+              </Typography>
+            </Box>
+          </Link>
+
           {!isMobile && (
             <Box sx={{ ml: 4, display: 'flex', gap: 2 }}>
-              <Button 
-                component={Link} 
-                to="/products" 
+              <Button
+                component={Link}
+                to="/products"
                 color="inherit"
-                sx={{ 
+                sx={{
                   fontWeight: 500,
                   '&:hover': {
                     backgroundColor: theme.palette.grey[100]
@@ -112,11 +113,11 @@ const Header: React.FC = () => {
               >
                 Produits
               </Button>
-              <Button 
-                component={Link} 
-                to="/equipment" 
+              <Button
+                component={Link}
+                to="/equipment"
                 color="inherit"
-                sx={{ 
+                sx={{
                   fontWeight: 500,
                   '&:hover': {
                     backgroundColor: theme.palette.grey[100]
@@ -125,11 +126,11 @@ const Header: React.FC = () => {
               >
                 Location
               </Button>
-              <Button 
-                component={Link} 
-                to="/contact" 
+              <Button
+                component={Link}
+                to="/contact"
                 color="inherit"
-                sx={{ 
+                sx={{
                   fontWeight: 500,
                   '&:hover': {
                     backgroundColor: theme.palette.grey[100]
@@ -145,11 +146,11 @@ const Header: React.FC = () => {
         {/* Actions utilisateur */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           {/* Panier */}
-          <IconButton 
-            component={Link} 
-            to="/cart" 
+          <IconButton
+            component={Link}
+            to="/cart"
             color="inherit"
-            sx={{ 
+            sx={{
               position: 'relative',
               '&:hover': {
                 backgroundColor: theme.palette.grey[100]
@@ -167,17 +168,17 @@ const Header: React.FC = () => {
               {!isMobile && (
                 <IconButton
                   onClick={handleProfileMenuOpen}
-                  sx={{ 
+                  sx={{
                     ml: 1,
                     '&:hover': {
                       backgroundColor: theme.palette.grey[100]
                     }
                   }}
                 >
-                  <Avatar 
-                    sx={{ 
-                      width: 32, 
-                      height: 32, 
+                  <Avatar
+                    sx={{
+                      width: 32,
+                      height: 32,
                       bgcolor: theme.palette.primary.main,
                       fontSize: '0.875rem'
                     }}
@@ -199,12 +200,12 @@ const Header: React.FC = () => {
             </>
           ) : (
             <Box sx={{ display: 'flex', gap: 1 }}>
-              <Button 
-                component={Link} 
-                to="/login" 
+              <Button
+                component={Link}
+                to="/login"
                 variant="outlined"
                 size="small"
-                sx={{ 
+                sx={{
                   borderColor: theme.palette.grey[300],
                   color: theme.palette.text.primary,
                   '&:hover': {
@@ -215,12 +216,12 @@ const Header: React.FC = () => {
               >
                 Connexion
               </Button>
-              <Button 
-                component={Link} 
-                to="/register" 
+              <Button
+                component={Link}
+                to="/register"
                 variant="contained"
                 size="small"
-                sx={{ 
+                sx={{
                   backgroundColor: theme.palette.primary.main,
                   '&:hover': {
                     backgroundColor: theme.palette.primary.dark
@@ -247,40 +248,40 @@ const Header: React.FC = () => {
             }
           }}
         >
-          <MenuItem 
-            component={Link} 
-            to="/profile" 
+          <MenuItem
+            component={Link}
+            to="/profile"
             onClick={handleMenuClose}
             sx={{ py: 1.5 }}
           >
             <PersonIcon sx={{ mr: 2, fontSize: 20 }} />
             Mon Profil
           </MenuItem>
-          <MenuItem 
-            component={Link} 
-            to="/orders" 
+          <MenuItem
+            component={Link}
+            to="/orders"
             onClick={handleMenuClose}
             sx={{ py: 1.5 }}
           >
             <OrdersIcon sx={{ mr: 2, fontSize: 20 }} />
             Mes Commandes
           </MenuItem>
-          <MenuItem 
-            component={Link} 
-            to="/rentals" 
+          <MenuItem
+            component={Link}
+            to="/rentals"
             onClick={handleMenuClose}
             sx={{ py: 1.5 }}
           >
             <RentalsIcon sx={{ mr: 2, fontSize: 20 }} />
             Mes Locations
           </MenuItem>
-          
+
           {user?.is_staff && (
             <>
               <Divider sx={{ my: 1 }} />
-              <MenuItem 
-                component={Link} 
-                to="/admin" 
+              <MenuItem
+                component={Link}
+                to="/admin"
                 onClick={handleMenuClose}
                 sx={{ py: 1.5 }}
               >
@@ -289,9 +290,9 @@ const Header: React.FC = () => {
               </MenuItem>
             </>
           )}
-          
+
           <Divider sx={{ my: 1 }} />
-          <MenuItem 
+          <MenuItem
             onClick={handleLogout}
             sx={{ py: 1.5, color: theme.palette.error.main }}
           >
@@ -314,66 +315,66 @@ const Header: React.FC = () => {
             }
           }}
         >
-          <MenuItem 
-            component={Link} 
-            to="/products" 
+          <MenuItem
+            component={Link}
+            to="/products"
             onClick={handleMenuClose}
             sx={{ py: 1.5 }}
           >
             Produits
           </MenuItem>
-          <MenuItem 
-            component={Link} 
-            to="/equipment" 
+          <MenuItem
+            component={Link}
+            to="/equipment"
             onClick={handleMenuClose}
             sx={{ py: 1.5 }}
           >
             Location
           </MenuItem>
-          <MenuItem 
-            component={Link} 
-            to="/contact" 
+          <MenuItem
+            component={Link}
+            to="/contact"
             onClick={handleMenuClose}
             sx={{ py: 1.5 }}
           >
             Contact
           </MenuItem>
-          
+
           {user && (
             <>
               <Divider sx={{ my: 1 }} />
-              <MenuItem 
-                component={Link} 
-                to="/profile" 
+              <MenuItem
+                component={Link}
+                to="/profile"
                 onClick={handleMenuClose}
                 sx={{ py: 1.5 }}
               >
                 <PersonIcon sx={{ mr: 2, fontSize: 20 }} />
                 Mon Profil
               </MenuItem>
-              <MenuItem 
-                component={Link} 
-                to="/orders" 
+              <MenuItem
+                component={Link}
+                to="/orders"
                 onClick={handleMenuClose}
                 sx={{ py: 1.5 }}
               >
                 <OrdersIcon sx={{ mr: 2, fontSize: 20 }} />
                 Mes Commandes
               </MenuItem>
-              <MenuItem 
-                component={Link} 
-                to="/rentals" 
+              <MenuItem
+                component={Link}
+                to="/rentals"
                 onClick={handleMenuClose}
                 sx={{ py: 1.5 }}
               >
                 <RentalsIcon sx={{ mr: 2, fontSize: 20 }} />
                 Mes Locations
               </MenuItem>
-              
+
               {user?.is_staff && (
-                <MenuItem 
-                  component={Link} 
-                  to="/admin" 
+                <MenuItem
+                  component={Link}
+                  to="/admin"
                   onClick={handleMenuClose}
                   sx={{ py: 1.5 }}
                 >
@@ -381,9 +382,9 @@ const Header: React.FC = () => {
                   Administration
                 </MenuItem>
               )}
-              
+
               <Divider sx={{ my: 1 }} />
-              <MenuItem 
+              <MenuItem
                 onClick={handleLogout}
                 sx={{ py: 1.5, color: theme.palette.error.main }}
               >

@@ -50,11 +50,12 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    # Placer notre middleware avant CsrfViewMiddleware pour marquer les URLs exemptées
+    'vente.middleware.CSRFExemptMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'vente.middleware.CSRFExemptMiddleware',
 ]
 
 
@@ -77,10 +78,14 @@ REST_FRAMEWORK = {
 
 # Désactiver CSRF pour les vues d'API
 CSRF_EXEMPT_URLS = [
-    r'^admin/orders/\d+/confirm/$',
-    r'^admin/orders/\d+/reject/$',
-    r'^admin/orders/\d+/ship/$',
-    r'^admin/orders/\d+/deliver/$',
+    r'^/api/admin/orders/\d+/confirm/$',
+    r'^/api/admin/orders/\d+/reject/$',
+    r'^/api/admin/orders/\d+/ship/$',
+    r'^/api/admin/orders/\d+/deliver/$',
+    r'^/api/admin/messages/\d+/respond/$',
+    r'^/create_payment_session/$',
+    r'^/contact/$',
+    r'^/stripe-webhook/$',
 ]
 
 
@@ -170,12 +175,14 @@ FRONTEND_URL = "http://localhost:3000"
 
 # Email Configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')  # Par défaut Gmail
-EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
-EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'celibertaizonou22@gmail.com')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'qdhx fwek oqrf bkpa')
-DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
+EMAIL_HOST = 'smtp.gmail.com'  # Par défaut Gmail
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'celibertaizonou22@gmail.com'
+EMAIL_HOST_PASSWORD = 'qdhxfwekoqrfbkpa'
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+# En développement, conserver le backend SMTP par défaut (à moins de le surcharger via variables d'environnement)
 
 # Authentication URLs
 LOGIN_URL = '/auth/login/'

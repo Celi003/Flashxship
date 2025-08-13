@@ -55,9 +55,11 @@ html {
   0% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.5;
   }
+
   100% {
     opacity: 1;
   }
@@ -66,4 +68,33 @@ html {
 .pulse {
   animation: pulse 1.5s ease-in-out infinite;
 }
- 
+
+/* Responsiveness helpers */
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Eviter le débordement du texte sur mobile */
+body,
+p,
+span,
+li,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* Réduire légèrement les paddings globaux sur très petits écrans */
+@media (max-width: 360px) {
+  .MuiContainer-root {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+}

@@ -1,7 +1,7 @@
-import axios from 'axios';
-import { 
-  Product, Equipment, ProductCategory, EquipmentCategory, 
-  Order, ContactMessage, User, CartItem 
+import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+import {
+  Product, Equipment, ProductCategory, EquipmentCategory,
+  Order, ContactMessage, User, CartItem
 } from '../types';
 
 // Configuration de base
@@ -13,34 +13,36 @@ const api = axios.create({
 });
 
 // Intercepteur pour ajouter le token d'accès
-api.interceptors.request.use((config) => {
+api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const accessToken = localStorage.getItem('accessToken');
   if (accessToken) {
-    config.headers.Authorization = `Bearer ${accessToken}`;
+    // Headers est toujours défini sur InternalAxiosRequestConfig
+    (config.headers as any).Authorization = `Bearer ${accessToken}`;
   }
   return config;
 });
 
 // Intercepteur pour gérer les erreurs 401 et rafraîchir le token
 api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-    
+  (response: AxiosResponse) => response,
+  async (error: AxiosError) => {
+    const originalRequest: any = error.config || {};
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-      
+
       const refreshToken = localStorage.getItem('refreshToken');
       if (refreshToken) {
         try {
           const response = await axios.post(`${API_BASE_URL}/refresh/`, {
             refresh_token: refreshToken
           });
-          
+
           const newAccessToken = response.data.access_token;
           localStorage.setItem('accessToken', newAccessToken);
-          
+
           // Retry la requête originale avec le nouveau token
+          originalRequest.headers = originalRequest.headers || {};
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
           return api(originalRequest);
         } catch (refreshError) {
@@ -52,27 +54,27 @@ api.interceptors.response.use(
         }
       }
     }
-    
+
     return Promise.reject(error);
   }
 );
 
 // Service d'authentification
 export const authService = {
-  login: (username: string, password: string) => 
-    api.post('/login/', { username, password }).then(res => res.data),
-  
-  register: (username: string, email: string, password: string, password2: string) => 
-    api.post('/register/', { username, email, password, password2 }).then(res => res.data),
-  
-  logout: (refreshToken: string) => 
-    api.post('/logout/', { refresh_token: refreshToken }).then(res => res.data),
-  
-  refreshToken: (refreshToken: string) => 
-    api.post('/refresh/', { refresh_token: refreshToken }).then(res => res.data),
-  
-  getUserInfo: () => 
-    api.get('/user/').then(res => res.data),
+  login: (username: string, password: string) =>
+    api.post('/login/', { username, password }).then((res: AxiosResponse<any>) => res.data),
+
+  register: (username: string, email: string, password: string, password2: string) =>
+    api.post('/register/', { username, email, password, password2 }).then((res: AxiosResponse<any>) => res.data),
+
+  logout: (refreshToken: string) =>
+    api.post('/logout/', { refresh_token: refreshToken }).then((res: AxiosResponse<any>) => res.data),
+
+  refreshToken: (refreshToken: string) =>
+    api.post('/refresh/', { refresh_token: refreshToken }).then((res: AxiosResponse<any>) => res.data),
+
+  getUserInfo: () =>
+    api.get('/user/').then((res: AxiosResponse<any>) => res.data),
 };
 
 // Services de produits
@@ -220,19 +222,19 @@ export const orderService = {
 
   // Méthodes d'administration
   confirm: async (orderId: number): Promise<void> => {
-    await api.post(`/admin/orders/${orderId}/confirm/`);
+    await api.post(`/api/admin/orders/${orderId}/confirm/`);
   },
 
   reject: async (orderId: number): Promise<void> => {
-    await api.post(`/admin/orders/${orderId}/reject/`);
+    await api.post(`/api/admin/orders/${orderId}/reject/`);
   },
 
   ship: async (orderId: number): Promise<void> => {
-    await api.post(`/admin/orders/${orderId}/ship/`);
+    await api.post(`/api/admin/orders/${orderId}/ship/`);
   },
 
   deliver: async (orderId: number): Promise<void> => {
-    await api.post(`/admin/orders/${orderId}/deliver/`);
+    await api.post(`/api/admin/orders/${orderId}/deliver/`);
   }
 };
 
@@ -241,14 +243,14 @@ export const contactService = {
   sendMessage: async (name: string, email: string, subject: string, message: string): Promise<void> => {
     await api.post('/contact/', { name, email, subject, message });
   },
-  
+
   getAll: async (): Promise<ContactMessage[]> => {
-    const response = await api.get('/admin/messages/');
+    const response = await api.get('/api/admin/messages/');
     return response.data;
   },
-  
+
   respond: async (messageId: number, response: string): Promise<void> => {
-    await api.post(`/admin/messages/${messageId}/respond/`, { response });
+    await api.post(`/api/admin/messages/${messageId}/respond/`, { response });
   }
 };
 
