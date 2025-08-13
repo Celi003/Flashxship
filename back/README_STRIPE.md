@@ -1,104 +1,73 @@
-# Configuration Stripe Backend
+# Configuration Stripe pour FLASHXSHIP
 
-## Configuration requise
+## Variables d'environnement requises
 
-### 1. Clés API Stripe
-
-Dans `back/back/settings.py`, configurez vos clés Stripe :
-
-```python
-# Stripe Configuration
-STRIPE_SECRET_KEY = "sk_test_votre_cle_secrete"
-STRIPE_PUBLIC_KEY = "pk_test_votre_cle_publique"
-STRIPE_WEBHOOK_SECRET = "whsec_votre_webhook_secret"
-```
-
-### 2. Obtention des clés
-
-1. **Clés API** :
-   - Allez sur [Stripe Dashboard](https://dashboard.stripe.com/apikeys)
-   - Copiez la "Secret key" (commence par `sk_test_`)
-   - Copiez la "Publishable key" (commence par `pk_test_`)
-
-2. **Webhook Secret** :
-   - Allez sur [Stripe Dashboard > Webhooks](https://dashboard.stripe.com/webhooks)
-   - Cliquez sur "Add endpoint"
-   - URL : `https://votre-domaine.com/api/webhook/stripe/`
-   - Événements : `checkout.session.completed`, `payment_intent.payment_failed`
-   - Copiez le "Signing secret" (commence par `whsec_`)
-
-### 3. Test de l'API
-
-Utilisez le script de test :
+Créez un fichier `.env` dans le dossier `back/` avec les variables suivantes :
 
 ```bash
-cd back
-python ../test_checkout.py
+# Configuration Stripe
+STRIPE_SECRET_KEY=sk_test_your_secret_key_here
+STRIPE_PUBLIC_KEY=pk_test_your_public_key_here
+STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret_here
+
+# Configuration Frontend
+FRONTEND_URL=http://localhost:3000
+
+# Configuration Email
+EMAIL_HOST_USER=your_email@gmail.com
+EMAIL_HOST_PASSWORD=your_app_password
 ```
 
-### 4. Cartes de test
+## Configuration du Webhook Stripe
 
-- **Succès** : `4242 4242 4242 4242`
-- **Échec** : `4000 0000 0000 0002`
-- **Date** : N'importe quelle date future
-- **CVC** : N'importe quels 3 chiffres
+### 1. **Webhook Secret** :
+- Allez sur [Stripe Dashboard > Webhooks](https://dashboard.stripe.com/webhooks)
+- Créez un nouveau webhook ou modifiez l'existant
+- URL : `https://votre-domaine.com/stripe-webhook/`
+- Événements à écouter : `checkout.session.completed`
 
-## Fonctionnalités implémentées
+### 2. **Récupération du Secret** :
+- Après avoir créé le webhook, cliquez dessus
+- Dans la section "Signing secret", cliquez sur "Reveal"
+- Copiez le secret commençant par `whsec_`
+- Mettez-le dans votre fichier `.env` comme `STRIPE_WEBHOOK_SECRET`
 
-### ✅ API Checkout
-- Création de session Stripe
-- Gestion des produits et équipements
-- Calcul automatique des prix
-- Métadonnées pour tracer les commandes
+### 3. **Test du Webhook** :
+- Utilisez l'outil de test Stripe pour envoyer un événement `checkout.session.completed`
+- Vérifiez que votre endpoint répond correctement
 
-### ✅ Webhook Stripe
-- Gestion des paiements réussis
-- Mise à jour du statut des commandes
-- Gestion des échecs de paiement
+## Problèmes courants et solutions
 
-### ✅ Sécurité
-- Authentification requise pour checkout
-- Validation des signatures webhook
-- Gestion des erreurs
+### Le statut de la commande ne se met pas à jour après le paiement
 
-## URLs API
+**Cause probable** : Le webhook Stripe n'est pas configuré correctement ou le secret est invalide.
 
-- `POST /api/checkout/` - Créer une session de paiement
-- `GET /api/orders/session/{session_id}/` - Récupérer les détails d'une commande
-- `POST /api/webhook/stripe/` - Webhook Stripe
+**Solutions** :
+1. Vérifiez que `STRIPE_WEBHOOK_SECRET` est correct dans votre `.env`
+2. Assurez-vous que l'URL du webhook est accessible depuis Internet
+3. Vérifiez les logs du serveur pour les erreurs de validation de signature
+4. Testez le webhook avec l'outil de test Stripe
 
-## Exemple de requête checkout
+### Erreur de validation de signature
 
-```json
-{
-  "items": [
-    {
-      "id": 1,
-      "type": "product",
-      "quantity": 2,
-      "days": 1
-    }
-  ],
-  "customer_info": {
-    "firstName": "John",
-    "lastName": "Doe",
-    "email": "john@example.com",
-    "phone": "0123456789",
-    "address": "123 Rue de la Paix",
-    "city": "Paris",
-    "postalCode": "75001",
-    "country": "France"
-  },
-  "success_url": "http://localhost:3000/success?success=true&session_id={CHECKOUT_SESSION_ID}",
-  "cancel_url": "http://localhost:3000/cart"
-}
-```
+**Cause** : Le secret du webhook ne correspond pas à celui configuré dans Stripe.
 
-## Déploiement
+**Solution** : Mettez à jour `STRIPE_WEBHOOK_SECRET` avec le bon secret depuis le dashboard Stripe.
 
-Pour la production :
+## Déploiement en production
 
-1. Utilisez les clés live Stripe (`sk_live_`, `pk_live_`)
-2. Configurez un webhook avec votre domaine de production
-3. Activez HTTPS pour les webhooks
-4. Testez avec de vraies cartes en mode test 
+1. Configurez un webhook avec votre domaine de production
+2. Activez HTTPS pour les webhooks
+3. Mettez à jour `FRONTEND_URL` avec votre URL de production
+4. Utilisez des clés Stripe de production (pas de test)
+
+## Test local
+
+Pour tester en local avec Stripe CLI :
+
+```bash
+# Installer Stripe CLI
+stripe listen --forward-to localhost:8000/stripe-webhook/
+
+# Copier le webhook secret affiché dans votre .env
+``` 

@@ -584,7 +584,7 @@ def create_payment_session(request):
             'payment_method_types': ['card'],
             'line_items': line_items,
             'mode': 'payment',
-            'success_url': f"{settings.FRONTEND_URL}/success?session_id={{CHECKOUT_SESSION_ID}}",
+            'success_url': f"{settings.FRONTEND_URL}/orders?payment_success=true&order_id={order.id}",
             'cancel_url': f"{settings.FRONTEND_URL}/orders",
             'metadata': {
                 'order_id': order.id,
@@ -624,6 +624,7 @@ def create_payment_session(request):
         return Response({'error': f'Error creating payment session: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 @csrf_exempt
 def stripe_webhook(request):
     payload = request.body
@@ -637,6 +638,8 @@ def stripe_webhook(request):
         return Response({'error': 'Invalid payload'}, status=400)
     except stripe.error.SignatureVerificationError as e:
         return Response({'error': 'Invalid signature'}, status=400)
+    except Exception as e:
+        return Response({'error': 'Unexpected error'}, status=400)
 
     if event['type'] == 'checkout.session.completed':
         session = event['data']['object']
@@ -645,11 +648,16 @@ def stripe_webhook(request):
         if order_id:
             try:
                 order = Order.objects.get(id=order_id)
+                # Mettre à jour le statut de paiement et de commande
                 order.payment_status = 'PAID'
-                order.status = 'PAID'
+                order.status = 'CONFIRMED'
                 order.stripe_session_id = session['id']
                 order.save()
+                
+                
             except Order.DoesNotExist:
+                pass
+            except Exception as e:
                 pass
 
     return Response({'status': 'success'})

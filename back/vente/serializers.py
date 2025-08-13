@@ -24,7 +24,7 @@ class ImageSerializer(serializers.ModelSerializer):
                 # Fallback: construire l'URL manuellement
                 return f"http://localhost:8000{obj.image.url}"
             except Exception as e:
-                print(f"Error generating image URL: {e}")
+        
                 return f"http://localhost:8000{obj.image.url}"
         return None
 

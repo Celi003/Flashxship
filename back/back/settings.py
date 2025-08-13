@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-ahv_lb73x9eypae8pqv9x0)58ced3azb5(6$h667*x2w2rp=is
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '42ccf785e2b0.ngrok-free.app']
 
 
 # Application definition
@@ -168,7 +168,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Stripe Configuration
 STRIPE_SECRET_KEY = "sk_test_51QyFvJITZNLvxKirz8scuDKdsB7r4Jk0QKDZHLvSVuMLHA9eLvBDmUR5xaLHtdShWnONBgF7fNhghoBLQo3V4GsR00hCyt3iEw"
 STRIPE_PUBLIC_KEY = "pk_test_51QyFvJITZNLvxKira0vz3UuTdu4fYW6qci1k9I1pnfOWOXwAkKWNZGGHPz8LuNkJmtLEzK811tBgbwZBCq3v1UIG0001WUesWt"
-STRIPE_WEBHOOK_SECRET = "whsec_your_webhook_secret_here"  # À configurer dans le dashboard Stripe
+STRIPE_WEBHOOK_SECRET = "whsec_AGbGFaalEFYDaFtTfZOhEtK2jWHQtwdy"  # À configurer dans le dashboard Stripe
 
 # Frontend URL
 FRONTEND_URL = "http://localhost:3000"
@@ -195,6 +195,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "https://42ccf785e2b0.ngrok-free.app",
 ]
 
 CORS_ALLOW_CREDENTIALS = True

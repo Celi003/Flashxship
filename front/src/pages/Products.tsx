@@ -36,7 +36,7 @@ import { Product, ProductCategory } from '../types';
 import { useCart } from '../contexts/CartContext';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
-import ImageTest from '../components/ImageTest';
+
 
 const Products: React.FC = () => {
   const theme = useTheme();
@@ -195,25 +195,6 @@ const Products: React.FC = () => {
         </Grid>
       </Box>
 
-             {/* Image Test Section */}
-       {products.length > 0 && products[0].images && products[0].images.length > 0 && (
-         <Box sx={{ mb: 4, p: 2, border: '2px dashed #ccc', borderRadius: 2 }}>
-           <Typography variant="h6" sx={{ mb: 2 }}>
-             🧪 Test des Images
-           </Typography>
-           <Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
-             {products[0].images.map((image: any, index: number) => (
-               <ImageTest
-                 key={index}
-                                   imageUrl={image.image ? `http://localhost:8000${image.image}` : undefined}
-                 fallbackUrl="https://via.placeholder.com/300x200/cccccc/666666?text=Produit"
-                 title={`Image ${index + 1} du produit ${products[0].name}`}
-               />
-             ))}
-           </Box>
-         </Box>
-       )}
-
        {/* Products Grid */}
        {isLoading ? (
         <Grid container spacing={3}>
@@ -258,12 +239,11 @@ const Products: React.FC = () => {
                        image={product.images?.[0]?.image_url || (product.images?.[0]?.image ? `http://localhost:8000${product.images[0].image}` : 'https://via.placeholder.com/300x200/cccccc/666666?text=Produit')}
                        alt={product.name}
                        sx={{ objectFit: 'cover' }}
-                                              onLoad={(e) => {
-                         console.log('✅ Image loaded successfully for product:', product.name, 'URL:', product.images?.[0]?.image);
-                       }}
+                                              onLoad={() => {
+                       // Image loaded successfully
+                     }}
                        onError={(e) => {
-                           console.log('❌ Image error for product:', product.name, 'Image path:', product.images?.[0]?.image);
-                           (e.target as HTMLImageElement).src = 'https://via.placeholder.com/300x200/cccccc/666666?text=Produit';
+                           (e.target as HTMLImageElement).src = '/placeholder-product.jpg';
                          }}
                      />
                     <CardContent sx={{ flexGrow: 1 }}>

@@ -252,10 +252,8 @@ const Equipment: React.FC = () => {
                      alt={equipment.name}
                      sx={{ objectFit: 'cover' }}
                      onLoad={(e) => {
-                                               console.log('✅ Image loaded successfully for equipment:', equipment.name, 'URL:', equipment.images?.[0]?.image);
                      }}
                      onError={(e) => {
-                                               console.log('❌ Image error for equipment:', equipment.name, 'Image path:', equipment.images?.[0]?.image);
                        (e.target as HTMLImageElement).src = '/placeholder-equipment.jpg';
                      }}
                    />

@@ -20,7 +20,7 @@ import {
 } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-// import StorageDebug from '../components/StorageDebug';
+
 
 const Home: React.FC = () => {
   const theme = useTheme();
@@ -72,10 +72,7 @@ const Home: React.FC = () => {
 
   return (
     <Box>
-      {/* Debug Component - À retirer en production */}
-      {/* <Container maxWidth="xl" sx={{ py: 2 }}>
-         <StorageDebug />
-       </Container> */}
+
 
       {/* Hero Section */}
       <Box

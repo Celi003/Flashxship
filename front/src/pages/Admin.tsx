@@ -808,35 +808,7 @@ const Admin: React.FC = () => {
           </Button>
         </Box>
 
-        {/* Debug: Affichage des données des produits */}
-        {products.length > 0 && (
-          <Box sx={{ mb: 3, p: 2, border: '2px dashed #ccc', borderRadius: 2, backgroundColor: '#f5f5f5' }}>
-            <Typography variant="h6" sx={{ mb: 2 }}>
-              🧪 Debug - Données des produits
-            </Typography>
-            <Typography variant="body2" sx={{ mb: 1 }}>
-              Nombre de produits: {products.length}
-            </Typography>
-            {products.slice(0, 2).map((product: any, index: number) => (
-              <Box key={index} sx={{ mb: 2, p: 2, border: '1px solid #ddd', borderRadius: 1, backgroundColor: 'white' }}>
-                <Typography variant="body2">
-                  <strong>Produit {index + 1}:</strong> {product.name}
-                </Typography>
-                <Typography variant="body2">
-                  <strong>Images:</strong> {product.images ? `${product.images.length} image(s)` : 'Aucune image'}
-                </Typography>
-                {product.images && product.images.length > 0 && (
-                  <Typography variant="body2">
-                    <strong>Première image:</strong> {product.images[0].image}
-                  </Typography>
-                )}
-                <Typography variant="body2">
-                  <strong>Données complètes:</strong> {JSON.stringify(product, null, 2)}
-                </Typography>
-              </Box>
-            ))}
-          </Box>
-        )}
+
 
         <Grid container spacing={3}>
           {Array.isArray(products) && products.map((product: any) => (
@@ -856,11 +828,7 @@ const Admin: React.FC = () => {
                           borderRadius: '8px'
                         }}
                         onError={(e) => {
-                          console.log('❌ Image error for product:', product.name, 'Image path:', product.images[0].image);
                           (e.target as HTMLImageElement).src = 'https://via.placeholder.com/300x150/cccccc/666666?text=Image+non+disponible';
-                        }}
-                        onLoad={(e) => {
-                          console.log('✅ Image loaded successfully for product:', product.name, 'URL:', product.images[0].image);
                         }}
                       />
                     </Box>
@@ -951,11 +919,7 @@ const Admin: React.FC = () => {
                           borderRadius: '8px'
                         }}
                         onError={(e) => {
-                          console.log('❌ Image error for equipment:', equip.name, 'Image path:', equip.images[0].image);
                           (e.target as HTMLImageElement).src = 'https://via.placeholder.com/300x150/cccccc/666666?text=Image+non+disponible';
-                        }}
-                        onLoad={(e) => {
-                          console.log('✅ Image loaded successfully for equipment:', equip.name, 'URL:', equip.images[0].image);
                         }}
                       />
                     </Box>

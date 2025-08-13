@@ -35,11 +35,28 @@ const Orders: React.FC = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+  // Styles pour l'animation de pulsation
+  const pulseAnimation = {
+    '@keyframes pulse': {
+      '0%': {
+        opacity: 1,
+      },
+      '50%': {
+        opacity: 0.5,
+      },
+      '100%': {
+        opacity: 1,
+      },
+    },
+  };
+
   // Fetch user orders
-  const { data: ordersResponse, isLoading, error } = useQuery({
+  const { data: ordersResponse, isLoading, error, refetch } = useQuery({
     queryKey: ['user-orders'],
     queryFn: orderService.getAll,
-    enabled: !!user
+    enabled: !!user,
+    refetchInterval: 30000, // Rafraîchir automatiquement toutes les 30 secondes
+    refetchIntervalInBackground: false
   });
 
   // Mutation pour créer une session de paiement
@@ -55,6 +72,37 @@ const Orders: React.FC = () => {
       console.error('Payment session error:', error?.response?.data || error);
     }
   });
+
+  // Fonction pour rafraîchir les données après retour du paiement
+  const refreshOrders = () => {
+    queryClient.invalidateQueries({ queryKey: ['user-orders'] });
+  };
+
+  // Vérifier si l'utilisateur revient d'un paiement Stripe
+  React.useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentSuccess = urlParams.get('payment_success');
+    const orderId = urlParams.get('order_id');
+    
+    if (paymentSuccess === 'true' && orderId) {
+      toast.success('Paiement effectué avec succès ! Votre commande a été confirmée.');
+      toast('Le statut de votre commande sera mis à jour dans quelques instants...', {
+        icon: '⏳',
+        duration: 4000
+      });
+      
+      // Nettoyer l'URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+      // Rafraîchir les données immédiatement
+      refreshOrders();
+      
+      // Rafraîchir à nouveau après 5 secondes pour s'assurer que le webhook a été traité
+      setTimeout(() => {
+        refreshOrders();
+        toast.success('Statut de la commande mis à jour !');
+      }, 5000);
+    }
+  }, []);
 
   const handlePayment = (orderId: number) => {
     createPaymentSessionMutation.mutate(orderId);
@@ -89,6 +137,7 @@ const Orders: React.FC = () => {
       case 'SHIPPED': return 'primary';
       case 'DELIVERED': return 'success';
       case 'CANCELLED': return 'error';
+      case 'REJECTED': return 'error';
       default: return 'default';
     }
   };
@@ -100,6 +149,7 @@ const Orders: React.FC = () => {
       case 'SHIPPED': return 'Expédiée';
       case 'DELIVERED': return 'Livrée';
       case 'CANCELLED': return 'Annulée';
+      case 'REJECTED': return 'Rejetée';
       default: return status;
     }
   };
@@ -129,12 +179,49 @@ const Orders: React.FC = () => {
           <Typography variant="h6" color="text.secondary">
             Suivez l'historique de vos achats et locations
           </Typography>
+          <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Button
+              variant="outlined"
+              onClick={() => refetch()}
+              disabled={isLoading}
+              size="small"
+            >
+              {isLoading ? 'Actualisation...' : 'Actualiser'}
+            </Button>
+            
+            {/* Indicateur de synchronisation automatique */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box
+                sx={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  bgcolor: 'success.main',
+                  ...pulseAnimation,
+                  animation: 'pulse 2s infinite'
+                }}
+              />
+              <Typography variant="caption" color="text.secondary">
+                Synchronisation automatique
+              </Typography>
+            </Box>
+          </Box>
         </motion.div>
       </Box>
 
       {error && (
         <Alert severity="error" sx={{ mb: 4 }}>
-          Erreur lors du chargement des commandes. Veuillez réessayer.
+          <Typography variant="body2" sx={{ mb: 1 }}>
+            Erreur lors du chargement des commandes. Veuillez réessayer.
+          </Typography>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => refetch()}
+            sx={{ mt: 1 }}
+          >
+            Réessayer
+          </Button>
         </Alert>
       )}
 
@@ -279,7 +366,7 @@ const Orders: React.FC = () => {
                         size="small"
                       />
 
-                      {order.payment_status === 'PENDING' && (
+                      {order.payment_status === 'PENDING' && order.status === 'PENDING' && (
                         <Button
                           variant="contained"
                           startIcon={<PaymentIcon />}
@@ -289,6 +376,15 @@ const Orders: React.FC = () => {
                         >
                           {createPaymentSessionMutation.isPending ? 'Chargement...' : 'Payer'}
                         </Button>
+                      )}
+
+                      {order.payment_status === 'PAID' && order.status === 'CONFIRMED' && (
+                        <Chip
+                          label="Commande confirmée"
+                          color="success"
+                          size="small"
+                          variant="outlined"
+                        />
                       )}
                     </Box>
                   </CardContent>
