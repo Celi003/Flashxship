@@ -133,7 +133,14 @@ SPECTACULAR_SETTINGS = {
 # }
 
 DATABASES = {
-    'default': dj_database_url.config(default=os.environ.get('DATABASE_URL'))
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'flashxship',
+        'USER': 'flashxship_user',
+        'PASSWORD': 'XtEYyAKgFVPiG1YcGWleKow5XCNPqdO1',
+        'HOST': 'dpg-d2ednm2li9vc73du7ad0-a',
+        'PORT': '5432',  # par défaut pour PostgreSQL
+    }
 }
 
 
@@ -203,7 +210,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "https://42ccf785e2b0.ngrok-free.app",
-    ".onrender.com",
+    "https://.onrender.com",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
