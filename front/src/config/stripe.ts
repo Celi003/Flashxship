@@ -1,7 +1,7 @@
 // Configuration simple pour les commandes
 export const ORDER_CONFIG = {
   // URLs de l'API
-  createOrderUrl: 'https://flashxship.onrender.com/create-order/',
+  createOrderUrl: 'http://localhost:8000/create-order/',
   
   // Configuration des commandes
   orderOptions: {

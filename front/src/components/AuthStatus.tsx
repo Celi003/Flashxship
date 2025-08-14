@@ -12,7 +12,7 @@ const AuthStatus: React.FC = () => {
     try {
   
       
-      const response = await fetch('https://flashxship.onrender.com/test-auth/', {
+      const response = await fetch('http://localhost:8000/test-auth/', {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
@@ -44,7 +44,7 @@ const AuthStatus: React.FC = () => {
     try {
   
       
-      const response = await fetch('https://flashxship.onrender.com/auth/login/', {
+      const response = await fetch('http://localhost:8000/auth/login/', {
         method: 'POST',
         credentials: 'include',
         headers: {

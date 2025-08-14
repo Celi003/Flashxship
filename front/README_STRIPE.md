@@ -15,7 +15,7 @@ Créez un fichier `.env` dans le dossier `front/` avec les variables suivantes :
 REACT_APP_STRIPE_PUBLISHABLE_KEY=pk_test_your_publishable_key_here
 
 # API Configuration
-REACT_APP_API_BASE_URL=https://flashxship.onrender.com
+REACT_APP_API_BASE_URL=http://localhost:8000
 ```
 
 ## Obtention de la clé Stripe
