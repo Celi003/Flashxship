@@ -14,6 +14,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import Products from './pages/Products';
 import Equipment from './pages/Equipment';
+import Services from './pages/Services';
 import Cart from './pages/Cart';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -51,6 +52,7 @@ function App() {
                   <Route path="/" element={<Home />} />
                   <Route path="/products" element={<Products />} />
                   <Route path="/equipment" element={<Equipment />} />
+                  <Route path="/services" element={<Services />} />
                   <Route path="/cart" element={<Cart />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
@@ -58,20 +60,20 @@ function App() {
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/orders" element={<Orders />} />
                   <Route path="/rentals" element={<Rentals />} />
-                  <Route 
-                    path="/admin" 
+                  <Route
+                    path="/admin"
                     element={
                       <ProtectedRoute>
                         <Admin />
                       </ProtectedRoute>
-                    } 
+                    }
                   />
                   <Route path="/checkout" element={<Checkout />} />
                   <Route path="/success" element={<Success />} />
                 </Routes>
               </Layout>
             </Router>
-            <Toaster 
+            <Toaster
               position="top-right"
               toastOptions={{
                 duration: 4000,

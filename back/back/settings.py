@@ -10,7 +10,6 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 import os
-import dj_database_url
 from pathlib import Path
 
 
@@ -25,7 +24,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-ahv_lb73x9eypae8pqv9x0)58ced3azb5(6$h667*x2w2rp=is'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+# Activé pour le développement local afin de servir les médias et faciliter le debug
+DEBUG = True
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '42ccf785e2b0.ngrok-free.app', '.onrender.com', 'flashxship.vercel.app']
 
@@ -125,12 +125,12 @@ SPECTACULAR_SETTINGS = {
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
- DATABASES = {
-     'default': {
-         'ENGINE': 'django.db.backends.sqlite3',
-         'NAME': BASE_DIR / 'db.sqlite3',
-     }
- }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
 
 #DATABASES = {
 #    'default': {
@@ -176,7 +176,8 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# Les médias sont dans le dossier parent (back/media)
+MEDIA_ROOT = BASE_DIR.parent / 'media'
 
 
 # Stripe Configuration

@@ -59,14 +59,14 @@ const Equipment: React.FC = () => {
   });
 
   // Extract arrays from responses with better error handling
-  const categories = Array.isArray(categoriesResponse) ? categoriesResponse : 
-                    (categoriesResponse as any)?.results || 
-                    (categoriesResponse && typeof categoriesResponse === 'object' ? Object.values(categoriesResponse) : []) || 
-                    [];
-  const equipment = Array.isArray(equipmentResponse) ? equipmentResponse : 
-                    (equipmentResponse as any)?.results || 
-                    (equipmentResponse && typeof equipmentResponse === 'object' ? Object.values(equipmentResponse) : []) || 
-                    [];
+  const categories = Array.isArray(categoriesResponse) ? categoriesResponse :
+    (categoriesResponse as any)?.results ||
+    (categoriesResponse && typeof categoriesResponse === 'object' ? Object.values(categoriesResponse) : []) ||
+    [];
+  const equipment = Array.isArray(equipmentResponse) ? equipmentResponse :
+    (equipmentResponse as any)?.results ||
+    (equipmentResponse && typeof equipmentResponse === 'object' ? Object.values(equipmentResponse) : []) ||
+    [];
 
 
 
@@ -123,7 +123,7 @@ const Equipment: React.FC = () => {
     toast.success(`${equipment.name} ajouté au panier`);
   };
 
-  const filteredEquipment = equipment.filter((item: EquipmentType) => 
+  const filteredEquipment = equipment.filter((item: EquipmentType) =>
     selectedCategory === '' || item.category.id === selectedCategory
   );
 
@@ -230,9 +230,9 @@ const Equipment: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
               >
-                <Card 
+                <Card
                   elevation={3}
-                  sx={{ 
+                  sx={{
                     height: '100%',
                     display: 'flex',
                     flexDirection: 'column',
@@ -243,41 +243,42 @@ const Equipment: React.FC = () => {
                     }
                   }}
                 >
-                                     <CardMedia
-                     component="img"
-                     height="200"
-                                           image={equipment.images && equipment.images.length > 0 
-                        ? (equipment.images[0].image_url || (equipment.images[0].image ? `http://localhost:8000${equipment.images[0].image}` : 'https://via.placeholder.com/300x200/cccccc/666666?text=Equipement'))
-                        : 'https://via.placeholder.com/300x200/cccccc/666666?text=Equipement'}
-                     alt={equipment.name}
-                     sx={{ objectFit: 'cover' }}
-                     onLoad={(e) => {
-                     }}
-                     onError={(e) => {
-                       (e.target as HTMLImageElement).src = '/placeholder-equipment.jpg';
-                     }}
-                   />
-                  
+                  <CardMedia
+                    component="img"
+                    height="200"
+                    image={equipment.images && equipment.images.length > 0
+                      ? (equipment.images[0].image_url || (equipment.images[0].image ? `http://localhost:8000${equipment.images[0].image}` : '/placeholders/placeholder-equipment.jpg'))
+                      : '/placeholders/placeholder-equipment.jpg'}
+                    alt={equipment.name}
+                    sx={{ objectFit: 'cover' }}
+                    decoding="async"
+                    onLoad={(e) => {
+                    }}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/placeholders/placeholder-equipment.jpg';
+                    }}
+                  />
+
                   <CardContent sx={{ flexGrow: 1 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
                       <Typography variant="h6" sx={{ fontWeight: 600, flex: 1 }}>
                         {equipment.name}
                       </Typography>
-                      <Chip 
-                        label={equipment.available ? 'Disponible' : 'Indisponible'} 
+                      <Chip
+                        label={equipment.available ? 'Disponible' : 'Indisponible'}
                         color={equipment.available ? 'success' : 'error'}
                         size="small"
                       />
                     </Box>
-                    
+
                     {equipment.description && (
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                        {equipment.description.length > 100 
-                          ? `${equipment.description.substring(0, 100)}...` 
+                        {equipment.description.length > 100
+                          ? `${equipment.description.substring(0, 100)}...`
                           : equipment.description}
                       </Typography>
                     )}
-                    
+
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                       <Typography variant="h6" color="primary" sx={{ fontWeight: 700 }}>
                         {formatPrice(equipment.rental_price_per_day)}/jour
@@ -285,7 +286,7 @@ const Equipment: React.FC = () => {
                       <Chip label={equipment.category.name} size="small" variant="outlined" />
                     </Box>
                   </CardContent>
-                  
+
                   <CardActions sx={{ p: 2, pt: 0 }}>
                     <Button
                       variant="contained"
@@ -360,8 +361,8 @@ const Equipment: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenRentalDialog(false)}>Annuler</Button>
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             onClick={handleConfirmRental}
             disabled={!startDate || !endDate}
           >
@@ -388,7 +389,7 @@ const Equipment: React.FC = () => {
                   </Typography>
                 )}
               </Grid>
-              
+
               <Grid item xs={12} sm={6}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                   Prix de location par jour
@@ -397,47 +398,47 @@ const Equipment: React.FC = () => {
                   {formatPrice(selectedEquipment.rental_price_per_day)}
                 </Typography>
               </Grid>
-              
+
               <Grid item xs={12} sm={6}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                   Disponibilité
                 </Typography>
-                <Chip 
-                  label={selectedEquipment.available ? 'Disponible' : 'Indisponible'} 
+                <Chip
+                  label={selectedEquipment.available ? 'Disponible' : 'Indisponible'}
                   color={selectedEquipment.available ? 'success' : 'error'}
                   size="medium"
                 />
               </Grid>
-              
+
               <Grid item xs={12}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
                   Catégorie
                 </Typography>
                 <Chip label={selectedEquipment.category.name} size="medium" />
               </Grid>
-              
+
               {selectedEquipment.images && selectedEquipment.images.length > 0 && (
                 <Grid item xs={12}>
                   <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
                     Images
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                                         {selectedEquipment.images.map((image, index) => (
-                       <Avatar
-                         key={index}
-                                                   src={image.image ? `http://localhost:8000${image.image}` : undefined}
-                         sx={{ width: 100, height: 100 }}
-                         variant="rounded"
-                         onError={(e) => {
-                           const target = e.target as HTMLImageElement;
-                           target.src = '/placeholder-equipment.jpg';
-                         }}
-                       />
-                     ))}
+                    {selectedEquipment.images.map((image, index) => (
+                      <Avatar
+                        key={index}
+                        src={image.image ? `http://localhost:8000${image.image}` : undefined}
+                        sx={{ width: 100, height: 100 }}
+                        variant="rounded"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = 'http://localhost:8000/media/images/placeholder-equipment.jpg';
+                        }}
+                      />
+                    ))}
                   </Box>
                 </Grid>
               )}
-              
+
               <Grid item xs={12}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                   Date de création

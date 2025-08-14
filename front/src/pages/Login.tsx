@@ -3,58 +3,47 @@ import {
   Box,
   Container,
   Typography,
-  TextField,
-  Button,
-  Link,
-  Alert,
-  Card,
-  CardContent,
-  InputAdornment,
-  IconButton
+  Link
 } from '@mui/material';
-import {
-  Person as PersonIcon,
-  Lock as LockIcon,
-  Visibility as VisibilityIcon,
-  VisibilityOff as VisibilityOffIcon
-} from '@mui/icons-material';
 import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
+import ModernForm from '../components/ModernForm';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
-  
-  const [formData, setFormData] = useState({
-    username: '',
-    password: ''
-  });
-  const [showPassword, setShowPassword] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const from = location.state?.from?.pathname || '/';
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-    setError(''); // Clear error when user starts typing
-  };
+  const loginFields = [
+    {
+      name: 'username',
+      label: 'Nom d\'utilisateur',
+      type: 'text' as const,
+      required: true
+    },
+    {
+      name: 'password',
+      label: 'Mot de passe',
+      type: 'password' as const,
+      required: true
+    }
+  ];
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (formData: Record<string, string>) => {
     setLoading(true);
     setError('');
 
     try {
       await login(formData.username, formData.password);
       toast.success('Connexion réussie !');
-      
+
       // Check if user is admin/superuser and redirect accordingly
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
@@ -76,107 +65,55 @@ const Login: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="sm" sx={{ py: 8 }}>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <Card sx={{ p: { xs: 3, md: 4 } }}>
-          <CardContent>
-            <Box sx={{ textAlign: 'center', mb: 4 }}>
-              <Typography variant="h4" component="h1" sx={{ mb: 2, fontWeight: 700 }}>
-                Connexion
-              </Typography>
-              <Typography variant="body1" color="text.secondary">
-                Connectez-vous à votre compte FlashxShip
-              </Typography>
-            </Box>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+        display: 'flex',
+        alignItems: 'center',
+        py: 4
+      }}
+    >
+      <Container maxWidth="sm">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <ModernForm
+            title="Connexion"
+            subtitle="Connectez-vous à votre compte FlashxShip"
+            fields={loginFields}
+            submitLabel="Se connecter"
+            loading={loading}
+            error={error}
+            onSubmit={handleSubmit}
+          />
 
-            {error && (
-              <Alert severity="error" sx={{ mb: 3 }}>
-                {error}
-              </Alert>
-            )}
-
-            <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
-              <TextField
-                fullWidth
-                label="Nom d'utilisateur"
-                name="username"
-                value={formData.username}
-                onChange={handleChange}
-                required
-                margin="normal"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <PersonIcon color="action" />
-                    </InputAdornment>
-                  )
+          {/* Additional Links */}
+          <Box sx={{ textAlign: 'center', mt: 3 }}>
+            <Typography variant="body2" color="text.secondary">
+              Pas encore de compte ?{' '}
+              <Link
+                component={RouterLink}
+                to="/register"
+                sx={{
+                  color: 'primary.main',
+                  textDecoration: 'none',
+                  fontWeight: 600,
+                  '&:hover': {
+                    textDecoration: 'underline'
+                  }
                 }}
-                sx={{ mb: 2 }}
-              />
-
-              <TextField
-                fullWidth
-                label="Mot de passe"
-                name="password"
-                type={showPassword ? 'text' : 'password'}
-                value={formData.password}
-                onChange={handleChange}
-                required
-                margin="normal"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <LockIcon color="action" />
-                    </InputAdornment>
-                  ),
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        onClick={() => setShowPassword(!showPassword)}
-                        edge="end"
-                      >
-                        {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                      </IconButton>
-                    </InputAdornment>
-                  )
-                }}
-                sx={{ mb: 3 }}
-              />
-
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                size="large"
-                disabled={loading}
-                sx={{ mb: 3, py: 1.5 }}
               >
-                {loading ? 'Connexion...' : 'Se connecter'}
-              </Button>
-
-              <Box sx={{ textAlign: 'center' }}>
-                <Typography variant="body2" sx={{ mb: 2 }}>
-                  Pas encore de compte ?{' '}
-                  <Link component={RouterLink} to="/register" variant="body2">
-                    Créer un compte
-                  </Link>
-                </Typography>
-                <Typography variant="body2">
-                  <Link component={RouterLink} to="/forgot-password" variant="body2">
-                    Mot de passe oublié ?
-                  </Link>
-                </Typography>
-              </Box>
-            </Box>
-          </CardContent>
-        </Card>
-      </motion.div>
-    </Container>
+                Créer un compte
+              </Link>
+            </Typography>
+          </Box>
+        </motion.div>
+      </Container>
+    </Box>
   );
 };
 
-export default Login; 
+export default Login;

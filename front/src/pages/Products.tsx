@@ -41,7 +41,7 @@ import toast from 'react-hot-toast';
 const Products: React.FC = () => {
   const theme = useTheme();
   const { addToCart } = useCart();
-  
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<number | ''>('');
   const [sortBy, setSortBy] = useState('name');
@@ -57,10 +57,10 @@ const Products: React.FC = () => {
   });
 
   // Extract categories array from response with better error handling
-  const categories = Array.isArray(categoriesResponse) ? categoriesResponse : 
-                    (categoriesResponse as any)?.results || 
-                    (categoriesResponse && typeof categoriesResponse === 'object' ? Object.values(categoriesResponse) : []) || 
-                    [];
+  const categories = Array.isArray(categoriesResponse) ? categoriesResponse :
+    (categoriesResponse as any)?.results ||
+    (categoriesResponse && typeof categoriesResponse === 'object' ? Object.values(categoriesResponse) : []) ||
+    [];
 
   // Fetch products
   const { data: productsResponse, isLoading, error } = useQuery({
@@ -68,11 +68,11 @@ const Products: React.FC = () => {
     queryFn: productService.getAll
   });
 
-    // Extract products array from response with better error handling
-  const products = Array.isArray(productsResponse) ? productsResponse : 
-                    (productsResponse as any)?.results || 
-                    (productsResponse && typeof productsResponse === 'object' ? Object.values(productsResponse) : []) || 
-                    [];
+  // Extract products array from response with better error handling
+  const products = Array.isArray(productsResponse) ? productsResponse :
+    (productsResponse as any)?.results ||
+    (productsResponse && typeof productsResponse === 'object' ? Object.values(productsResponse) : []) ||
+    [];
 
 
 
@@ -195,8 +195,8 @@ const Products: React.FC = () => {
         </Grid>
       </Box>
 
-       {/* Products Grid */}
-       {isLoading ? (
+      {/* Products Grid */}
+      {isLoading ? (
         <Grid container spacing={3}>
           {[...Array(12)].map((_, index) => (
             <Grid item xs={12} sm={6} md={4} lg={3} key={index}>
@@ -233,19 +233,20 @@ const Products: React.FC = () => {
                       }
                     }}
                   >
-                                         <CardMedia
-                       component="img"
-                       height="200"
-                       image={product.images?.[0]?.image_url || (product.images?.[0]?.image ? `http://localhost:8000${product.images[0].image}` : 'https://via.placeholder.com/300x200/cccccc/666666?text=Produit')}
-                       alt={product.name}
-                       sx={{ objectFit: 'cover' }}
-                                              onLoad={() => {
-                       // Image loaded successfully
-                     }}
-                       onError={(e) => {
-                           (e.target as HTMLImageElement).src = '/placeholder-product.jpg';
-                         }}
-                     />
+                    <CardMedia
+                      component="img"
+                      height="200"
+                      image={product.images?.[0]?.image_url || (product.images?.[0]?.image ? `http://localhost:8000${product.images[0].image}` : '/placeholders/placeholder-product.jpg')}
+                      alt={product.name}
+                      sx={{ objectFit: 'cover' }}
+                      decoding="async"
+                      onLoad={() => {
+                        // Image loaded successfully
+                      }}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/placeholders/placeholder-product.jpg';
+                      }}
+                    />
                     <CardContent sx={{ flexGrow: 1 }}>
                       <Typography variant="h6" component="h3" sx={{ mb: 1, fontWeight: 600 }}>
                         {product.name}
@@ -257,16 +258,16 @@ const Products: React.FC = () => {
                         <Typography variant="h6" color="primary" sx={{ fontWeight: 700 }}>
                           {formatPrice(product.price)}
                         </Typography>
-                        <Chip 
-                          label={`Stock: ${product.stock}`} 
+                        <Chip
+                          label={`Stock: ${product.stock}`}
                           color={product.stock > 0 ? 'success' : 'error'}
                           size="small"
                         />
                       </Box>
                       {product.category && (
-                        <Chip 
-                          label={product.category.name} 
-                          size="small" 
+                        <Chip
+                          label={product.category.name}
+                          size="small"
                           sx={{ mb: 2 }}
                         />
                       )}
@@ -330,7 +331,7 @@ const Products: React.FC = () => {
                   </Typography>
                 )}
               </Grid>
-              
+
               <Grid item xs={12} sm={6}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                   Prix
@@ -339,47 +340,47 @@ const Products: React.FC = () => {
                   {formatPrice(selectedProduct.price)}
                 </Typography>
               </Grid>
-              
+
               <Grid item xs={12} sm={6}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                   Stock
                 </Typography>
-                <Chip 
-                  label={selectedProduct.stock} 
+                <Chip
+                  label={selectedProduct.stock}
                   color={selectedProduct.stock > 0 ? 'success' : 'error'}
                   size="medium"
                 />
               </Grid>
-              
+
               <Grid item xs={12}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
                   Catégorie
                 </Typography>
                 <Chip label={selectedProduct.category.name} size="medium" />
               </Grid>
-              
+
               {selectedProduct.images && selectedProduct.images.length > 0 && (
                 <Grid item xs={12}>
                   <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
                     Images
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                                         {selectedProduct.images.map((image, index) => (
-                       <Avatar
-                         key={index}
-                                                   src={image.image ? `http://localhost:8000${image.image}` : undefined}
-                         sx={{ width: 100, height: 100 }}
-                         variant="rounded"
-                         onError={(e) => {
-                           const target = e.target as HTMLImageElement;
-                           target.src = 'https://via.placeholder.com/300x200/cccccc/666666?text=Produit';
-                         }}
-                       />
-                     ))}
+                    {selectedProduct.images.map((image, index) => (
+                      <Avatar
+                        key={index}
+                        src={image.image ? `http://localhost:8000${image.image}` : undefined}
+                        sx={{ width: 100, height: 100 }}
+                        variant="rounded"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = 'https://via.placeholder.com/300x200/cccccc/666666?text=Produit';
+                        }}
+                      />
+                    ))}
                   </Box>
                 </Grid>
               )}
-              
+
               <Grid item xs={12}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                   Date de création
@@ -394,8 +395,8 @@ const Products: React.FC = () => {
         <DialogActions>
           <Button onClick={() => setOpenDetailsDialog(false)}>Fermer</Button>
           {selectedProduct && (
-            <Button 
-              variant="contained" 
+            <Button
+              variant="contained"
               onClick={() => {
                 handleAddToCart(selectedProduct);
                 setOpenDetailsDialog(false);

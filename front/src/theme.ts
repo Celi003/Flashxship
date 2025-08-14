@@ -66,36 +66,49 @@ export const theme = createTheme({
     },
   },
   typography: {
-    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+    fontFamily: '"Poppins", "Roboto", "Helvetica", "Arial", sans-serif',
     h1: {
       fontWeight: 700,
       color: flashxshipColors.black,
+      fontFamily: '"Poppins", sans-serif',
     },
     h2: {
       fontWeight: 600,
       color: flashxshipColors.black,
+      fontFamily: '"Poppins", sans-serif',
     },
     h3: {
       fontWeight: 600,
       color: flashxshipColors.black,
+      fontFamily: '"Poppins", sans-serif',
     },
     h4: {
       fontWeight: 600,
       color: flashxshipColors.black,
+      fontFamily: '"Poppins", sans-serif',
     },
     h5: {
       fontWeight: 600,
       color: flashxshipColors.black,
+      fontFamily: '"Poppins", sans-serif',
     },
     h6: {
       fontWeight: 600,
       color: flashxshipColors.black,
+      fontFamily: '"Poppins", sans-serif',
     },
     body1: {
       color: flashxshipColors.black,
+      fontFamily: '"Poppins", sans-serif',
     },
     body2: {
       color: flashxshipColors.gray,
+      fontFamily: '"Poppins", sans-serif',
+    },
+    button: {
+      fontFamily: '"Poppins", sans-serif',
+      fontWeight: 500,
+      textTransform: 'none' as const,
     },
   },
   components: {
