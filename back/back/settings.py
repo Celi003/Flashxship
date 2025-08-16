@@ -125,23 +125,23 @@ SPECTACULAR_SETTINGS = {
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
 
-#DATABASES = {
-#    'default': {
-#        'ENGINE': 'django.db.backends.postgresql',
-#        'NAME': 'flashxship',
-#        'USER': 'flashxship_user',
-#        'PASSWORD': 'XtEYyAKgFVPiG1YcGWleKow5XCNPqdO1',
-#        'HOST': 'dpg-d2ednm2li9vc73du7ad0-a',
-#        'PORT': '5432',  # par défaut pour PostgreSQL
-#    }
-#}
+DATABASES = {
+   'default': {
+       'ENGINE': 'django.db.backends.postgresql',
+       'NAME': 'flashxship',
+       'USER': 'flashxship_user',
+       'PASSWORD': 'XtEYyAKgFVPiG1YcGWleKow5XCNPqdO1',
+       'HOST': 'dpg-d2ednm2li9vc73du7ad0-a',
+       'PORT': '5432',  # par défaut pour PostgreSQL
+   }
+}
 
 
 # Password validation
