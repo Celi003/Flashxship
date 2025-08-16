@@ -45,7 +45,6 @@ INSTALLED_APPS = [
     'drf_spectacular_sidecar',
     'cloudinary',
     'cloudinary_storage',
-    'django.contrib.staticfiles',
     'corsheaders',
     'vente',
 ]
