@@ -43,6 +43,9 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'drf_spectacular',
     'drf_spectacular_sidecar',
+    'cloudinary',
+    'cloudinary_storage',
+    'django.contrib.staticfiles',
     'corsheaders',
     'vente',
 ]
@@ -171,14 +174,31 @@ USE_I18N = True
 
 USE_TZ = True
 
-STATIC_URL = 'static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
+
+# Static files
+STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-MEDIA_URL = '/media/'
-# Les médias sont dans le dossier parent (back/media)
-MEDIA_ROOT = BASE_DIR.parent / 'media'
+# Active la compression
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
+# Media files (gérés par Cloudinary)
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+# STATIC_URL = 'static/'
+# STATICFILES_DIRS = [BASE_DIR / 'static']
+# STATIC_ROOT = BASE_DIR / 'staticfiles'
+#
+# MEDIA_URL = '/media/'
+# # Les médias sont dans le dossier parent (back/media)
+# MEDIA_ROOT = BASE_DIR.parent / 'media'
+
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': 'dfzuzyiqf',
+    'API_KEY': '726314553858618',
+    'API_SECRET': 'Av5GWQiHKB7vvNzAu-Gc946c1ko',
+}
 
 # Stripe Configuration
 STRIPE_SECRET_KEY = "sk_test_51QyFvJITZNLvxKirz8scuDKdsB7r4Jk0QKDZHLvSVuMLHA9eLvBDmUR5xaLHtdShWnONBgF7fNhghoBLQo3V4GsR00hCyt3iEw"
