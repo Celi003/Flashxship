@@ -105,7 +105,7 @@ const Header: React.FC = () => {
           flex: { xs: 1, md: 'none' },
           minWidth: 0
         }}>
-          <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }} className="logo-link">
             <Box sx={{
               display: 'flex',
               alignItems: 'center',
@@ -644,18 +644,37 @@ const Header: React.FC = () => {
                       onClick={handleMobileMenuClose}
                       sx={{
                         py: 1.5,
-                        backgroundColor: 'primary.main',
+                        backgroundColor: 'secondary.main',
                         color: 'white',
                         mx: 2,
                         borderRadius: 1,
+                        fontWeight: 600,
+                        minHeight: '48px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                         '&:hover': {
-                          backgroundColor: 'primary.dark'
+                          backgroundColor: 'secondary.dark'
+                        },
+                        '& .MuiListItemText-primary': {
+                          color: 'white',
+                          fontWeight: 600,
+                          fontSize: '1rem'
+                        },
+                        '& .MuiListItemButton-root': {
+                          color: 'white'
                         }
                       }}
                     >
                       <ListItemText
                         primary="S'inscrire"
-                        sx={{ textAlign: 'center' }}
+                        sx={{ 
+                          textAlign: 'center',
+                          '& .MuiTypography-root': {
+                            color: 'white',
+                            fontWeight: 600
+                          }
+                        }}
                       />
                     </ListItemButton>
                   </ListItem>

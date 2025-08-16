@@ -39,7 +39,8 @@ import {
   TableHead,
   TableRow,
   DialogContentText,
-  Tooltip
+  Tooltip,
+  CircularProgress
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -69,6 +70,8 @@ import {
 } from '../services/api';
 import { Product, ProductCategory, Equipment, EquipmentCategory, Order, ContactMessage } from '../types';
 import toast from 'react-hot-toast';
+import ImageUploadSection from '../components/ImageUploadSection';
+import ImageManagementSection from '../components/ImageManagementSection';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -109,14 +112,16 @@ const Admin: React.FC = () => {
     price: '',
     stock: '',
     category: '',
-    image: null as File | null
+    images: [] as File[],
+    existingImages: [] as Array<{ id: number; image: string; image_url?: string }>
   });
   const [equipmentForm, setEquipmentForm] = useState({
     name: '',
     description: '',
     rental_price_per_day: '',
     category: '',
-    image: null as File | null
+    images: [] as File[],
+    existingImages: [] as Array<{ id: number; image: string; image_url?: string }>
   });
 
   // États pour l'édition
@@ -125,7 +130,23 @@ const Admin: React.FC = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [editingEquipment, setEditingEquipment] = useState<Equipment | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteType, setDeleteType] = useState<'product' | 'equipment' | 'category' | 'equipmentCategory'>('product');
+  const [deleteId, setDeleteId] = useState<number | null>(null);
   const [itemToDelete, setItemToDelete] = useState<{ type: string; id: number; name: string } | null>(null);
+
+  // États de chargement pour les actions des commandes
+  const [loadingActions, setLoadingActions] = useState<{
+    confirm: number | null;
+    reject: number | null;
+    ship: number | null;
+    deliver: number | null;
+  }>({
+    confirm: null,
+    reject: null,
+    ship: null,
+    deliver: null
+  });
+
   // Détails commande
   const [orderDetailsOpen, setOrderDetailsOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -245,15 +266,17 @@ const Admin: React.FC = () => {
       formData.append('price', data.price.toString());
       formData.append('stock', data.stock.toString());
       formData.append('category_id', data.category.toString());
-      if (data.image) {
-        formData.append('image_files', data.image);
+      if (data.images && data.images.length > 0) {
+        data.images.forEach((file: File) => {
+          formData.append('image_files', file);
+        });
       }
       return productService.create(formData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       setOpenProductDialog(false);
-      setProductForm({ name: '', description: '', price: '', stock: '', category: '', image: null });
+      setProductForm({ name: '', description: '', price: '', stock: '', category: '', images: [], existingImages: [] });
       toast.success('Produit créé avec succès');
     },
     onError: () => {
@@ -269,15 +292,17 @@ const Admin: React.FC = () => {
       formData.append('rental_price_per_day', data.rental_price_per_day.toString());
       formData.append('category_id', data.category.toString());
       formData.append('available', 'true');
-      if (data.image) {
-        formData.append('image_files', data.image);
+      if (data.images && data.images.length > 0) {
+        data.images.forEach((file: File) => {
+          formData.append('image_files', file);
+        });
       }
       return equipmentService.create(formData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['equipment'] });
       setOpenEquipmentDialog(false);
-      setEquipmentForm({ name: '', description: '', rental_price_per_day: '', category: '', image: null });
+      setEquipmentForm({ name: '', description: '', rental_price_per_day: '', category: '', images: [], existingImages: [] });
       toast.success('Équipement créé avec succès');
     },
     onError: () => {
@@ -414,7 +439,8 @@ const Admin: React.FC = () => {
       price: product.price.toString(),
       stock: product.stock.toString(),
       category: product.category.id.toString(),
-      image: null
+      images: [],
+      existingImages: product.images.map(image => ({ id: image.id, image: image.image, image_url: image.image_url }))
     });
   };
 
@@ -425,7 +451,8 @@ const Admin: React.FC = () => {
       description: equipment.description,
       rental_price_per_day: equipment.rental_price_per_day.toString(),
       category: equipment.category.id.toString(),
-      image: null
+      images: [],
+      existingImages: equipment.images.map(image => ({ id: image.id, image: image.image, image_url: image.image_url }))
     });
   };
 
@@ -484,8 +511,17 @@ const Admin: React.FC = () => {
     formData.append('price', productForm.price);
     formData.append('stock', productForm.stock);
     formData.append('category_id', productForm.category);
-    if (productForm.image) {
-      formData.append('image_files', productForm.image);
+    
+    // Ajouter les nouvelles images
+    if (productForm.images && productForm.images.length > 0) {
+      productForm.images.forEach(file => formData.append('image_files', file));
+    }
+    
+    // Ajouter les IDs des images existantes à conserver
+    if (productForm.existingImages && productForm.existingImages.length > 0) {
+      productForm.existingImages.forEach(img => {
+        formData.append('existing_image_ids', img.id.toString());
+      });
     }
 
     updateProductMutation.mutate({ id: editingProduct.id, data: formData });
@@ -499,8 +535,17 @@ const Admin: React.FC = () => {
     formData.append('description', equipmentForm.description);
     formData.append('rental_price_per_day', equipmentForm.rental_price_per_day);
     formData.append('category_id', equipmentForm.category);
-    if (equipmentForm.image) {
-      formData.append('image_files', equipmentForm.image);
+    
+    // Ajouter les nouvelles images
+    if (equipmentForm.images && equipmentForm.images.length > 0) {
+      equipmentForm.images.forEach(file => formData.append('image_files', file));
+    }
+    
+    // Ajouter les IDs des images existantes à conserver
+    if (equipmentForm.existingImages && equipmentForm.existingImages.length > 0) {
+      equipmentForm.existingImages.forEach(img => {
+        formData.append('existing_image_ids', img.id.toString());
+      });
     }
 
     updateEquipmentMutation.mutate({ id: editingEquipment.id, data: formData });
@@ -510,8 +555,8 @@ const Admin: React.FC = () => {
   const resetForms = () => {
     setProductCategoryForm({ name: '', description: '' });
     setEquipmentCategoryForm({ name: '', description: '' });
-    setProductForm({ name: '', description: '', price: '', stock: '', category: '', image: null });
-    setEquipmentForm({ name: '', description: '', rental_price_per_day: '', category: '', image: null });
+    setProductForm({ name: '', description: '', price: '', stock: '', category: '', images: [], existingImages: [] });
+    setEquipmentForm({ name: '', description: '', rental_price_per_day: '', category: '', images: [], existingImages: [] });
   };
 
   // Fonctions pour annuler l'édition
@@ -603,6 +648,7 @@ const Admin: React.FC = () => {
 
   // Fonctions de gestion des actions d'admin
   const handleConfirmOrder = async (orderId: number) => {
+    setLoadingActions(prev => ({ ...prev, confirm: orderId }));
     try {
       await orderService.confirm(orderId);
       toast.success('Commande confirmée avec succès');
@@ -611,10 +657,13 @@ const Admin: React.FC = () => {
     } catch (error) {
       console.error('Erreur lors de la confirmation:', error);
       toast.error('Erreur lors de la confirmation de la commande');
+    } finally {
+      setLoadingActions(prev => ({ ...prev, confirm: null }));
     }
   };
 
   const handleRejectOrder = async (orderId: number) => {
+    setLoadingActions(prev => ({ ...prev, reject: orderId }));
     try {
       await orderService.reject(orderId);
       toast.success('Commande rejetée avec succès');
@@ -623,10 +672,13 @@ const Admin: React.FC = () => {
     } catch (error) {
       console.error('Erreur lors du rejet:', error);
       toast.error('Erreur lors du rejet de la commande');
+    } finally {
+      setLoadingActions(prev => ({ ...prev, reject: null }));
     }
   };
 
   const handleShipOrder = async (orderId: number) => {
+    setLoadingActions(prev => ({ ...prev, ship: orderId }));
     try {
       await orderService.ship(orderId);
       toast.success('Commande expédiée avec succès');
@@ -635,10 +687,13 @@ const Admin: React.FC = () => {
     } catch (error) {
       console.error('Erreur lors de l\'expédition:', error);
       toast.error('Erreur lors de l\'expédition de la commande');
+    } finally {
+      setLoadingActions(prev => ({ ...prev, ship: null }));
     }
   };
 
   const handleDeliverOrder = async (orderId: number) => {
+    setLoadingActions(prev => ({ ...prev, deliver: orderId }));
     try {
       await orderService.deliver(orderId);
       toast.success('Commande livrée avec succès');
@@ -647,6 +702,8 @@ const Admin: React.FC = () => {
     } catch (error) {
       console.error('Erreur lors de la livraison:', error);
       toast.error('Erreur lors de la livraison de la commande');
+    } finally {
+      setLoadingActions(prev => ({ ...prev, deliver: null }));
     }
   };
 
@@ -656,6 +713,68 @@ const Admin: React.FC = () => {
       currency: 'EUR',
       minimumFractionDigits: 0
     }).format(price);
+  };
+
+  const handleRemoveExistingProductImage = (imageId: number) => {
+    setProductForm(prev => ({
+      ...prev,
+      existingImages: prev.existingImages.filter(img => img.id !== imageId)
+    }));
+  };
+
+  const handleRemoveExistingEquipmentImage = (imageId: number) => {
+    setEquipmentForm(prev => ({
+      ...prev,
+      existingImages: prev.existingImages.filter(img => img.id !== imageId)
+    }));
+  };
+
+  const handleAddNewProductImages = (files: FileList | null) => {
+    if (!files) return;
+    
+    const newFiles = Array.from(files);
+    const totalImages = productForm.existingImages.length + productForm.images.length + newFiles.length;
+    
+    if (totalImages > 5) {
+      toast.error(`Vous ne pouvez pas avoir plus de 5 images au total. Vous avez actuellement ${productForm.existingImages.length + productForm.images.length} image(s)`);
+      return;
+    }
+    
+    setProductForm(prev => ({
+      ...prev,
+      images: [...prev.images, ...newFiles]
+    }));
+  };
+
+  const handleAddNewEquipmentImages = (files: FileList | null) => {
+    if (!files) return;
+    
+    const newFiles = Array.from(files);
+    const totalImages = equipmentForm.existingImages.length + equipmentForm.images.length + newFiles.length;
+    
+    if (totalImages > 5) {
+      toast.error(`Vous ne pouvez pas avoir plus de 5 images au total. Vous avez actuellement ${equipmentForm.existingImages.length + equipmentForm.images.length} image(s)`);
+      return;
+    }
+    
+    setEquipmentForm(prev => ({
+      ...prev,
+      images: [...prev.images, ...newFiles]
+    }));
+  };
+
+  const handleRemoveNewProductImage = (index: number) => {
+    setProductForm(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleRemoveNewEquipmentImage = (index: number) => {
+    setEquipmentForm(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
   };
 
   return (
@@ -1041,8 +1160,9 @@ const Admin: React.FC = () => {
                                   color="success"
                                   size="small"
                                   onClick={() => handleConfirmOrder(order.id)}
+                                  disabled={loadingActions.confirm === order.id}
                                 >
-                                  <CheckCircleIcon />
+                                  {loadingActions.confirm === order.id ? <CircularProgress size={20} /> : <CheckCircleIcon />}
                                 </IconButton>
                               </Tooltip>
                               <Tooltip title="Rejeter">
@@ -1052,8 +1172,9 @@ const Admin: React.FC = () => {
                                   color="error"
                                   size="small"
                                   onClick={() => handleRejectOrder(order.id)}
+                                  disabled={loadingActions.reject === order.id}
                                 >
-                                  <CancelIcon />
+                                  {loadingActions.reject === order.id ? <CircularProgress size={20} /> : <CancelIcon />}
                                 </IconButton>
                               </Tooltip>
                               <Tooltip title="Expédier">
@@ -1063,8 +1184,9 @@ const Admin: React.FC = () => {
                                   color="primary"
                                   size="small"
                                   onClick={() => handleShipOrder(order.id)}
+                                  disabled={loadingActions.ship === order.id}
                                 >
-                                  <ShipIcon />
+                                  {loadingActions.ship === order.id ? <CircularProgress size={20} /> : <ShipIcon />}
                                 </IconButton>
                               </Tooltip>
                               <Tooltip title="Livrer">
@@ -1074,8 +1196,9 @@ const Admin: React.FC = () => {
                                   color="secondary"
                                   size="small"
                                   onClick={() => handleDeliverOrder(order.id)}
+                                  disabled={loadingActions.deliver === order.id}
                                 >
-                                  <DeliverIcon />
+                                  {loadingActions.deliver === order.id ? <CircularProgress size={20} /> : <DeliverIcon />}
                                 </IconButton>
                               </Tooltip>
                             </Box>
@@ -1375,20 +1498,15 @@ const Admin: React.FC = () => {
                 ))}
               </Select>
             </FormControl>
-            <Box sx={{ mt: 2 }}>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = (e.target as HTMLInputElement).files?.[0];
-                  setProductForm({ ...productForm, image: file || null });
-                }}
-                style={{ marginBottom: '8px' }}
-              />
-              <Typography variant="caption" color="text.secondary">
-                Format accepté: JPG, PNG, GIF (max 5MB)
-              </Typography>
-            </Box>
+            <ImageManagementSection
+              title="Images du produit"
+              existingImages={[]}
+              newImages={productForm.images}
+              onExistingImageRemove={() => {}}
+              onNewImageAdd={handleAddNewProductImages}
+              onNewImageRemove={handleRemoveNewProductImage}
+              maxImages={5}
+            />
           </Box>
         </DialogContent>
         <DialogActions>
@@ -1452,20 +1570,15 @@ const Admin: React.FC = () => {
                 ))}
               </Select>
             </FormControl>
-            <Box sx={{ mt: 2 }}>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = (e.target as HTMLInputElement).files?.[0];
-                  setEquipmentForm({ ...equipmentForm, image: file || null });
-                }}
-                style={{ marginBottom: '8px' }}
-              />
-              <Typography variant="caption" color="text.secondary">
-                Format accepté: JPG, PNG, GIF (max 5MB)
-              </Typography>
-            </Box>
+            <ImageManagementSection
+              title="Images de l'équipement"
+              existingImages={[]}
+              newImages={equipmentForm.images}
+              onExistingImageRemove={() => {}}
+              onNewImageAdd={handleAddNewEquipmentImages}
+              onNewImageRemove={handleRemoveNewEquipmentImage}
+              maxImages={5}
+            />
           </Box>
         </DialogContent>
         <DialogActions>
@@ -1611,20 +1724,15 @@ const Admin: React.FC = () => {
                 ))}
               </Select>
             </FormControl>
-            <Box sx={{ mt: 2 }}>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = (e.target as HTMLInputElement).files?.[0];
-                  setProductForm({ ...productForm, image: file || null });
-                }}
-                style={{ marginBottom: '8px' }}
-              />
-              <Typography variant="caption" color="text.secondary">
-                Format accepté: JPG, PNG, GIF (max 5MB) - Laissez vide pour conserver l'image actuelle
-              </Typography>
-            </Box>
+            <ImageManagementSection
+              title="Gestion des images"
+              existingImages={productForm.existingImages}
+              newImages={productForm.images}
+              onExistingImageRemove={handleRemoveExistingProductImage}
+              onNewImageAdd={handleAddNewProductImages}
+              onNewImageRemove={handleRemoveNewProductImage}
+              maxImages={5}
+            />
           </Box>
         </DialogContent>
         <DialogActions>
@@ -1688,20 +1796,15 @@ const Admin: React.FC = () => {
                 ))}
               </Select>
             </FormControl>
-            <Box sx={{ mt: 2 }}>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = (e.target as HTMLInputElement).files?.[0];
-                  setEquipmentForm({ ...equipmentForm, image: file || null });
-                }}
-                style={{ marginBottom: '8px' }}
-              />
-              <Typography variant="caption" color="text.secondary">
-                Format accepté: JPG, PNG, GIF (max 5MB) - Laissez vide pour conserver l'image actuelle
-              </Typography>
-            </Box>
+            <ImageManagementSection
+              title="Gestion des images"
+              existingImages={equipmentForm.existingImages}
+              newImages={equipmentForm.images}
+              onExistingImageRemove={handleRemoveExistingEquipmentImage}
+              onNewImageAdd={handleAddNewEquipmentImages}
+              onNewImageRemove={handleRemoveNewEquipmentImage}
+              maxImages={5}
+            />
           </Box>
         </DialogContent>
         <DialogActions>
@@ -1742,241 +1845,7 @@ const Admin: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Dialogues de modification */}
 
-      {/* Modification Catégorie Produit */}
-      <Dialog open={!!editingProductCategory} onClose={handleCancelEdit} maxWidth="sm" fullWidth>
-        <DialogTitle>Modifier la catégorie de produit</DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 2 }}>
-            <TextField
-              fullWidth
-              label="Nom de la catégorie"
-              value={productCategoryForm.name}
-              onChange={(e) => setProductCategoryForm({ ...productCategoryForm, name: e.target.value })}
-              sx={{ mb: 2 }}
-              required
-            />
-            <TextField
-              fullWidth
-              label="Description"
-              multiline
-              rows={3}
-              value={productCategoryForm.description}
-              onChange={(e) => setProductCategoryForm({ ...productCategoryForm, description: e.target.value })}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelEdit}>Annuler</Button>
-          <Button
-            variant="contained"
-            onClick={handleUpdateProductCategory}
-            disabled={updateProductCategoryMutation.isPending}
-          >
-            {updateProductCategoryMutation.isPending ? 'Modification...' : 'Modifier'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Modification Catégorie Équipement */}
-      <Dialog open={!!editingEquipmentCategory} onClose={handleCancelEdit} maxWidth="sm" fullWidth>
-        <DialogTitle>Modifier la catégorie d'équipement</DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 2 }}>
-            <TextField
-              fullWidth
-              label="Nom de la catégorie"
-              value={equipmentCategoryForm.name}
-              onChange={(e) => setEquipmentCategoryForm({ ...equipmentCategoryForm, name: e.target.value })}
-              sx={{ mb: 2 }}
-              required
-            />
-            <TextField
-              fullWidth
-              label="Description"
-              multiline
-              rows={3}
-              value={equipmentCategoryForm.description}
-              onChange={(e) => setEquipmentCategoryForm({ ...equipmentCategoryForm, description: e.target.value })}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelEdit}>Annuler</Button>
-          <Button
-            variant="contained"
-            onClick={handleUpdateEquipmentCategory}
-            disabled={updateEquipmentCategoryMutation.isPending}
-          >
-            {updateEquipmentCategoryMutation.isPending ? 'Modification...' : 'Modifier'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Modification Produit */}
-      <Dialog open={!!editingProduct} onClose={handleCancelEdit} maxWidth="sm" fullWidth>
-        <DialogTitle>Modifier le produit</DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 2 }}>
-            <TextField
-              fullWidth
-              label="Nom du produit"
-              value={productForm.name}
-              onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
-              sx={{ mb: 2 }}
-              required
-            />
-            <TextField
-              fullWidth
-              label="Description"
-              multiline
-              rows={3}
-              value={productForm.description}
-              onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
-              sx={{ mb: 2 }}
-            />
-            <Grid container spacing={2}>
-              <Grid item xs={6}>
-                <TextField
-                  fullWidth
-                  label="Prix"
-                  type="number"
-                  value={productForm.price}
-                  onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
-                  required
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  fullWidth
-                  label="Stock"
-                  type="number"
-                  value={productForm.stock}
-                  onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })}
-                  required
-                />
-              </Grid>
-            </Grid>
-            <FormControl fullWidth sx={{ mt: 2 }}>
-              <InputLabel>Catégorie</InputLabel>
-              <Select
-                value={productForm.category}
-                label="Catégorie"
-                onChange={(e) => setProductForm({ ...productForm, category: e.target.value })}
-                required
-              >
-                {Array.isArray(productCategories) && productCategories.map((category: any) => (
-                  <MenuItem key={category.id} value={category.id}>
-                    {category.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <Box sx={{ mt: 2 }}>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = (e.target as HTMLInputElement).files?.[0];
-                  setProductForm({ ...productForm, image: file || null });
-                }}
-                style={{ marginBottom: '8px' }}
-              />
-              <Typography variant="caption" color="text.secondary">
-                Format accepté: JPG, PNG, GIF (max 5MB) - Laissez vide pour conserver l'image actuelle
-              </Typography>
-            </Box>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelEdit}>Annuler</Button>
-          <Button
-            variant="contained"
-            onClick={handleUpdateProduct}
-            disabled={updateProductMutation.isPending}
-          >
-            {updateProductMutation.isPending ? 'Modification...' : 'Modifier'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Modification Équipement */}
-      <Dialog open={!!editingEquipment} onClose={handleCancelEdit} maxWidth="sm" fullWidth>
-        <DialogTitle>Modifier l'équipement</DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 2 }}>
-            <TextField
-              fullWidth
-              label="Nom de l'équipement"
-              value={equipmentForm.name}
-              onChange={(e) => setEquipmentForm({ ...equipmentForm, name: e.target.value })}
-              sx={{ mb: 2 }}
-              required
-            />
-            <TextField
-              fullWidth
-              label="Description"
-              multiline
-              rows={3}
-              value={equipmentForm.description}
-              onChange={(e) => setEquipmentForm({ ...equipmentForm, description: e.target.value })}
-              sx={{ mb: 2 }}
-            />
-            <Grid container spacing={2}>
-              <Grid item xs={6}>
-                <TextField
-                  fullWidth
-                  label="Prix de location par jour"
-                  type="number"
-                  value={equipmentForm.rental_price_per_day}
-                  onChange={(e) => setEquipmentForm({ ...equipmentForm, rental_price_per_day: e.target.value })}
-                  required
-                />
-              </Grid>
-            </Grid>
-            <FormControl fullWidth sx={{ mt: 2 }}>
-              <InputLabel>Catégorie</InputLabel>
-              <Select
-                value={equipmentForm.category}
-                label="Catégorie"
-                onChange={(e) => setEquipmentForm({ ...equipmentForm, category: e.target.value })}
-                required
-              >
-                {Array.isArray(equipmentCategories) && equipmentCategories.map((category: any) => (
-                  <MenuItem key={category.id} value={category.id}>
-                    {category.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <Box sx={{ mt: 2 }}>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = (e.target as HTMLInputElement).files?.[0];
-                  setEquipmentForm({ ...equipmentForm, image: file || null });
-                }}
-                style={{ marginBottom: '8px' }}
-              />
-              <Typography variant="caption" color="text.secondary">
-                Format accepté: JPG, PNG, GIF (max 5MB) - Laissez vide pour conserver l'image actuelle
-              </Typography>
-            </Box>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelEdit}>Annuler</Button>
-          <Button
-            variant="contained"
-            onClick={handleUpdateEquipment}
-            disabled={updateEquipmentMutation.isPending}
-          >
-            {updateEquipmentMutation.isPending ? 'Modification...' : 'Modifier'}
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       {/* Dialogue de confirmation de suppression */}
       <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>

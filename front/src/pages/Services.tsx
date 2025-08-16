@@ -32,13 +32,13 @@ const Services: React.FC = () => {
     const mainServices = [
         {
             icon: <ShoppingCartIcon sx={{ fontSize: 48, color: 'primary.main' }} />,
-            title: 'Vente d\'équipements',
-            description: 'Large gamme d\'équipements professionnels neufs et reconditionnés',
+            title: 'Vente de produits',
+            description: 'Large gamme de produits de qualité disponibles à l\'achat',
             features: [
-                'Équipements certifiés CE',
-                'Garantie constructeur',
-                'Prix compétitifs',
-                'Stock permanent'
+                'Produits variés et authentiques',
+                'Livraison rapide',
+                'Tarifs abordables',
+                'Disponibilité immédiate'
             ],
             color: 'primary.main'
         },
@@ -141,7 +141,7 @@ const Services: React.FC = () => {
                                     lineHeight: 1.6
                                 }}
                             >
-                                Solutions complètes pour vos équipements professionnels
+                                Solutions complètes pour vos produits de qualités supérieure et vos équipements professionnels
                             </Typography>
                             <Button
                                 component={Link}
@@ -194,7 +194,9 @@ const Services: React.FC = () => {
                         color="text.secondary"
                         sx={{ mb: 8, maxWidth: '600px', mx: 'auto' }}
                     >
-                        Des solutions adaptées à tous vos besoins professionnels
+                        Vente en ligne de tous types de produits avec un large catalogue accessible 24/7 <br />
+                        Location d’équipements professionnels robustes et fiables <br />
+                        Solutions flexibles et adaptées à vos besoins
                     </Typography>
                 </motion.div>
 

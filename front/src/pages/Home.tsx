@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -8,27 +8,53 @@ import {
   Card,
   CardContent,
   useTheme,
-  Avatar,
-  Rating
+  useMediaQuery
 } from '@mui/material';
 import {
+  ArrowForward as ArrowIcon,
   ShoppingCart as CartIcon,
   Build as BuildIcon,
   LocalShipping as ShippingIcon,
-  Security as SecurityIcon,
-  ArrowForward as ArrowIcon
+  Support as SupportIcon,
+  Security as SecurityIcon
 } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
+import { reviewService } from '../services/api';
+import { Review } from '../types';
+import ReviewsCarousel from '../components/ReviewsCarousel';
+import ReviewForm from '../components/ReviewForm';
 
 const Home: React.FC = () => {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const [reviewFormOpen, setReviewFormOpen] = useState(false);
+
+  // Fetch reviews
+  const { data: reviews = [], refetch: refetchReviews } = useQuery({
+    queryKey: ['reviews'],
+    queryFn: reviewService.getAll
+  });
+
+  // Debug: Log des avis récupérés
+  useEffect(() => {
+    console.log('Reviews fetched:', reviews);
+  }, [reviews]);
+
+  const handleAddReview = () => {
+    setReviewFormOpen(true);
+  };
+
+  const handleReviewSuccess = () => {
+    refetchReviews();
+  };
 
   const features = [
     {
       icon: <CartIcon sx={{ fontSize: 48, color: 'primary.main' }} />,
       title: 'Achat en ligne',
-      description: 'Commandez vos équipements professionnels en quelques clics avec livraison rapide'
+      description: 'Commandez vos produits en quelques clics avec livraison rapide'
     },
     {
       icon: <BuildIcon sx={{ fontSize: 48, color: 'primary.main' }} />,
@@ -37,8 +63,8 @@ const Home: React.FC = () => {
     },
     {
       icon: <ShippingIcon sx={{ fontSize: 48, color: 'secondary.main' }} />,
-      title: 'Livraison express',
-      description: 'Livraison dans toute la France avec suivi en temps réel'
+      title: 'Livraison mondiale',
+      description: 'Livraison du Bénin vers le monde entier avec suivi en temps réel'
     },
     {
       icon: <SecurityIcon sx={{ fontSize: 48, color: 'primary.main' }} />,
@@ -49,33 +75,9 @@ const Home: React.FC = () => {
 
   const stats = [
     { number: '5000+', label: 'Produits disponibles' },
-    { number: '500+', label: 'Clients satisfaits' },
-    { number: '24h', label: 'Livraison express' },
-    { number: '99%', label: 'Taux de satisfaction' }
-  ];
-
-  const testimonials = [
-    {
-      name: 'Jean Dupont',
-      company: 'Entreprise Construction',
-      rating: 5,
-      comment: 'Service exceptionnel ! Les équipements sont de qualité et la livraison est rapide.',
-      avatar: 'JD'
-    },
-    {
-      name: 'Marie Martin',
-      company: 'Société BTP',
-      rating: 5,
-      comment: 'FlashxShip est devenu notre partenaire de confiance pour tous nos projets.',
-      avatar: 'MM'
-    },
-    {
-      name: 'Pierre Durand',
-      company: 'Groupe Projet',
-      rating: 5,
-      comment: 'Prix compétitifs et service client remarquable. Je recommande vivement !',
-      avatar: 'PD'
-    }
+    { number: reviews.length.toString(), label: 'Avis clients' },
+    { number: '24h', label: 'Livraison mondiale' },
+    { number: reviews.length > 0 ? Math.round((reviews.reduce((acc: number, review: Review) => acc + review.rating, 0) / reviews.length) * 20) + '%' : '99%', label: 'Taux de satisfaction' }
   ];
 
   return (
@@ -122,7 +124,7 @@ const Home: React.FC = () => {
                     opacity: 0.9
                   }}
                 >
-                  Votre partenaire de confiance pour l'équipement professionnel
+                  Votre partenaire de confiance pour l'équipement professionnel et des produits de qualité
                 </Typography>
                 <Typography
                   variant="body1"
@@ -134,8 +136,8 @@ const Home: React.FC = () => {
                     fontSize: { xs: '1rem', md: '1.1rem' }
                   }}
                 >
-                  Découvrez notre gamme complète d'équipements professionnels,
-                  disponibles à l'achat ou en location avec un service client d'exception.
+                  Découvrez notre gamme complète de produits à l'achat et d'équipements professionnels,
+                  disponibles en location avec un service client d'exception.
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                   <Button
@@ -263,7 +265,7 @@ const Home: React.FC = () => {
               fontSize: { xs: '1rem', md: '1.2rem' }
             }}
           >
-            Nous offrons des solutions complètes pour tous vos besoins en équipement professionnel
+            Nous offrons des solutions complètes pour tous vos besoins en équipement professionnel et des produits de qualité livrables partout dans le monde.
           </Typography>
         </Box>
 
@@ -380,7 +382,7 @@ const Home: React.FC = () => {
         </Container>
       </Box>
 
-      {/* Testimonials Section */}
+      {/* Reviews Section */}
       <Container maxWidth="xl" sx={{ py: { xs: 6, md: 10 } }}>
         <Box textAlign="center" sx={{ mb: 8 }}>
           <Typography
@@ -406,71 +408,18 @@ const Home: React.FC = () => {
           </Typography>
         </Box>
 
-        <Grid container spacing={4}>
-          {testimonials.map((testimonial, index) => (
-            <Grid item xs={12} md={4} key={index}>
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-              >
-                <Card
-                  sx={{
-                    height: '100%',
-                    p: 3,
-                    borderRadius: 3,
-                    border: '1px solid',
-                    borderColor: 'grey.200',
-                    '&:hover': {
-                      transform: 'translateY(-4px)',
-                      boxShadow: '0 12px 24px rgba(0,0,0,0.1)'
-                    }
-                  }}
-                  className="card-hover"
-                >
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                      <Avatar
-                        sx={{
-                          bgcolor: 'primary.main',
-                          mr: 2,
-                          width: 50,
-                          height: 50,
-                          fontSize: '1.2rem'
-                        }}
-                      >
-                        {testimonial.avatar}
-                      </Avatar>
-                      <Box>
-                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                          {testimonial.name}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {testimonial.company}
-                        </Typography>
-                      </Box>
-                    </Box>
-                    <Rating
-                      value={testimonial.rating}
-                      readOnly
-                      sx={{ mb: 2 }}
-                    />
-                    <Typography
-                      variant="body1"
-                      sx={{
-                        fontStyle: 'italic',
-                        lineHeight: 1.6
-                      }}
-                    >
-                      "{testimonial.comment}"
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
-          ))}
-        </Grid>
+        <ReviewsCarousel 
+          reviews={reviews} 
+          onAddReview={handleAddReview}
+        />
       </Container>
+
+      {/* Review Form Dialog */}
+      <ReviewForm
+        open={reviewFormOpen}
+        onClose={() => setReviewFormOpen(false)}
+        onSuccess={handleReviewSuccess}
+      />
     </Box>
   );
 };

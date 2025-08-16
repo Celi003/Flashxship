@@ -145,3 +145,31 @@ class ContactMessage(models.Model):
 
     def __str__(self):
         return f"Message from {self.name} - {self.subject}"
+
+class Review(models.Model):
+    RATING_CHOICES = (
+        (1, '1 étoile'),
+        (2, '2 étoiles'),
+        (3, '3 étoiles'),
+        (4, '4 étoiles'),
+        (5, '5 étoiles'),
+    )
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+    company = models.CharField(max_length=100, blank=True, null=True)
+    rating = models.IntegerField(choices=RATING_CHOICES)
+    comment = models.TextField()
+    is_approved = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-rating', '-created_at']
+    
+    def __str__(self):
+        return f"Avis de {self.name} - {self.rating} étoiles"
+    
+    def get_rating_display(self):
+        return f"{self.rating} étoile{'s' if self.rating > 1 else ''}"

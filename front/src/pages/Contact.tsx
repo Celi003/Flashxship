@@ -81,12 +81,14 @@ const Contact: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      await contactService.sendMessage(
-        formData.name,
-        formData.email,
-        formData.subject,
-        formData.message
-      );
+      // Créer un objet FormData avec les données du formulaire
+      const messageData = new FormData();
+      messageData.append('name', formData.name);
+      messageData.append('email', formData.email);
+      messageData.append('subject', formData.subject);
+      messageData.append('message', formData.message);
+      
+      await contactService.sendMessage(messageData);
       
       toast.success('Message envoyé avec succès ! Nous vous répondrons dans les plus brefs délais.');
       setFormData({ name: '', email: '', subject: '', message: '' });
@@ -132,7 +134,7 @@ const Contact: React.FC = () => {
             Contactez-nous
           </Typography>
           <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 600, mx: 'auto' }}>
-            Notre équipe est là pour vous accompagner dans tous vos projets d'équipement professionnel
+            Notre équipe est là pour vous accompagner dans toutes vos commandes de produits et vos projets d'équipement professionnel
           </Typography>
         </motion.div>
       </Box>

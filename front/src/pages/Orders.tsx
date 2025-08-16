@@ -16,12 +16,15 @@ import {
   Skeleton,
   Alert,
   useTheme,
-  Button
+  Button,
+  CircularProgress,
+  Fade
 } from '@mui/material';
 import {
   ShoppingBag as OrderIcon,
   Store as StoreIcon,
-  Payment as PaymentIcon
+  Payment as PaymentIcon,
+  Refresh as RefreshIcon
 } from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
@@ -49,6 +52,51 @@ const Orders: React.FC = () => {
       },
     },
   };
+
+  // Fonction utilitaire pour créer des boutons d'action avec indicateur de chargement
+  const createActionButton = (
+    label: string,
+    icon: React.ReactNode,
+    onClick: () => void,
+    isLoading: boolean = false,
+    disabled: boolean = false,
+    variant: 'contained' | 'outlined' | 'text' = 'contained',
+    color: 'primary' | 'secondary' | 'success' | 'error' | 'warning' | 'info' = 'primary'
+  ) => (
+    <Button
+      variant={variant}
+      color={color}
+      startIcon={
+        isLoading ? (
+          <CircularProgress size={16} color="inherit" />
+        ) : (
+          icon
+        )
+      }
+      onClick={onClick}
+      disabled={disabled || isLoading}
+      size="small"
+      sx={{
+        minWidth: 100,
+        position: 'relative',
+        overflow: 'hidden',
+        transition: 'all 0.2s ease-in-out',
+        '&:disabled': {
+          opacity: 0.8
+        },
+        '&:hover': {
+          transform: isLoading ? 'none' : 'translateY(-1px)',
+          boxShadow: isLoading ? 'none' : theme.shadows[4]
+        }
+      }}
+    >
+      <Fade in={!isLoading}>
+        <Box>
+          {isLoading ? 'Traitement...' : label}
+        </Box>
+      </Fade>
+    </Button>
+  );
 
   // Fetch user orders
   const { data: ordersResponse, isLoading, error, refetch } = useQuery({
@@ -185,6 +233,7 @@ const Orders: React.FC = () => {
               onClick={() => refetch()}
               disabled={isLoading}
               size="small"
+              startIcon={isLoading ? <CircularProgress size={16} /> : <RefreshIcon />}
             >
               {isLoading ? 'Actualisation...' : 'Actualiser'}
             </Button>
@@ -366,16 +415,25 @@ const Orders: React.FC = () => {
                         size="small"
                       />
 
+                      {order.payment_status === 'PENDING' && order.status === 'CONFIRMED' && (
+                        createActionButton(
+                          'Payer',
+                          <PaymentIcon />,
+                          () => handlePayment(order.id),
+                          createPaymentSessionMutation.isPending,
+                          false,
+                          'contained',
+                          'primary'
+                        )
+                      )}
+
                       {order.payment_status === 'PENDING' && order.status === 'PENDING' && (
-                        <Button
-                          variant="contained"
-                          startIcon={<PaymentIcon />}
-                          onClick={() => handlePayment(order.id)}
-                          disabled={createPaymentSessionMutation.isPending}
+                        <Chip
+                          label="En attente de confirmation"
+                          color="warning"
                           size="small"
-                        >
-                          {createPaymentSessionMutation.isPending ? 'Chargement...' : 'Payer'}
-                        </Button>
+                          variant="outlined"
+                        />
                       )}
 
                       {order.payment_status === 'PAID' && order.status === 'CONFIRMED' && (

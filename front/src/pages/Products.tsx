@@ -36,6 +36,8 @@ import { Product, ProductCategory } from '../types';
 import { useCart } from '../contexts/CartContext';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
+import ImageGallery from '../components/ImageGallery';
+import ProductCard from '../components/ProductCard';
 
 
 const Products: React.FC = () => {
@@ -78,10 +80,17 @@ const Products: React.FC = () => {
 
   // Filter and sort products
   const filteredProducts = products
-    .filter((product: Product) =>
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    .filter((product: Product) => {
+      // Filtrage par recherche textuelle
+      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           product.description.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      // Filtrage par catégorie - vérifier que la catégorie existe et correspond
+      const matchesCategory = selectedCategory === '' || 
+                             (product.category && product.category.id === selectedCategory);
+      
+      return matchesSearch && matchesCategory;
+    })
     .sort((a: Product, b: Product) => {
       switch (sortBy) {
         case 'price-asc':
@@ -109,6 +118,21 @@ const Products: React.FC = () => {
   const handleViewDetails = (product: Product) => {
     setSelectedProduct(product);
     setOpenDetailsDialog(true);
+  };
+
+  // Fonctions wrapper pour ProductCard (qui attend des fonctions prenant un id: number)
+  const handleAddToCartById = (id: number) => {
+    const product = products.find((p: Product) => p.id === id);
+    if (product) {
+      handleAddToCart(product);
+    }
+  };
+
+  const handleViewDetailsById = (id: number) => {
+    const product = products.find((p: Product) => p.id === id);
+    if (product) {
+      handleViewDetails(product);
+    }
   };
 
   const formatPrice = (price: number) => {
@@ -216,84 +240,18 @@ const Products: React.FC = () => {
           <Grid container spacing={3}>
             {paginatedProducts.map((product: Product, index: number) => (
               <Grid item xs={12} sm={6} md={4} lg={3} key={product.id}>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                >
-                  <Card
-                    sx={{
-                      height: '100%',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
-                      '&:hover': {
-                        transform: 'translateY(-4px)',
-                        boxShadow: theme.shadows[8]
-                      }
-                    }}
-                  >
-                    <CardMedia
-                      component="img"
-                      height="200"
-                      image={product.images?.[0]?.image_url || (product.images?.[0]?.image ? `http://localhost:8000${product.images[0].image}` : '/placeholders/placeholder-product.jpg')}
-                      alt={product.name}
-                      sx={{ objectFit: 'cover' }}
-                      decoding="async"
-                      onLoad={() => {
-                        // Image loaded successfully
-                      }}
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/placeholders/placeholder-product.jpg';
-                      }}
-                    />
-                    <CardContent sx={{ flexGrow: 1 }}>
-                      <Typography variant="h6" component="h3" sx={{ mb: 1, fontWeight: 600 }}>
-                        {product.name}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                        {product.description}
-                      </Typography>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                        <Typography variant="h6" color="primary" sx={{ fontWeight: 700 }}>
-                          {formatPrice(product.price)}
-                        </Typography>
-                        <Chip
-                          label={`Stock: ${product.stock}`}
-                          color={product.stock > 0 ? 'success' : 'error'}
-                          size="small"
-                        />
-                      </Box>
-                      {product.category && (
-                        <Chip
-                          label={product.category.name}
-                          size="small"
-                          sx={{ mb: 2 }}
-                        />
-                      )}
-                    </CardContent>
-                    <CardActions sx={{ p: 2, pt: 0 }}>
-                      <Button
-                        fullWidth
-                        variant="contained"
-                        startIcon={<CartIcon />}
-                        onClick={() => handleAddToCart(product)}
-                        disabled={product.stock === 0}
-                        sx={{ mb: 1 }}
-                      >
-                        {product.stock > 0 ? 'Ajouter au panier' : 'Rupture de stock'}
-                      </Button>
-                      <Button
-                        fullWidth
-                        variant="outlined"
-                        startIcon={<ViewIcon />}
-                        onClick={() => handleViewDetails(product)}
-                      >
-                        Voir détails
-                      </Button>
-                    </CardActions>
-                  </Card>
-                </motion.div>
+                <ProductCard
+                  id={product.id}
+                  name={product.name}
+                  description={product.description}
+                  price={product.price}
+                  image=""
+                  images={product.images}
+                  category={product.category?.name || 'Sans catégorie'}
+                  isAvailable={product.stock > 0}
+                  onAddToCart={handleAddToCartById}
+                  onViewDetails={handleViewDetailsById}
+                />
               </Grid>
             ))}
           </Grid>
@@ -361,23 +319,13 @@ const Products: React.FC = () => {
 
               {selectedProduct.images && selectedProduct.images.length > 0 && (
                 <Grid item xs={12}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
-                    Images
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                    {selectedProduct.images.map((image, index) => (
-                      <Avatar
-                        key={index}
-                        src={image.image ? `http://localhost:8000${image.image}` : undefined}
-                        sx={{ width: 100, height: 100 }}
-                        variant="rounded"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = 'https://via.placeholder.com/300x200/cccccc/666666?text=Produit';
-                        }}
-                      />
-                    ))}
-                  </Box>
+                  <ImageGallery 
+                    images={selectedProduct.images}
+                    title="Images du produit"
+                    maxHeight={150}
+                    showNavigation={true}
+                    showZoom={true}
+                  />
                 </Grid>
               )}
 

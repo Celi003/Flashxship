@@ -70,7 +70,7 @@ const Register: React.FC = () => {
         password2: formData.password2
       };
 
-      await apiClient.post('/api/register/', registerData);
+      await apiClient.post('/register/', registerData);
 
       // Connexion automatique après inscription
       await login(formData.username, formData.password);

@@ -10,7 +10,9 @@ import {
   Button,
   Tabs,
   Tab,
-  useTheme
+  useTheme,
+  TextField,
+  Alert
 } from '@mui/material';
 import {
   Person as PersonIcon,
@@ -21,6 +23,8 @@ import {
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { userService } from '../services/api';
 import toast from 'react-hot-toast';
 
 interface TabPanelProps {
@@ -47,12 +51,34 @@ function TabPanel(props: TabPanelProps) {
 
 const Profile: React.FC = () => {
   const theme = useTheme();
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
+  const queryClient = useQueryClient();
   const [tabValue, setTabValue] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({
     username: user?.username || '',
     email: user?.email || ''
+  });
+
+  // Mutation pour mettre à jour le profil
+  const updateProfileMutation = useMutation({
+    mutationFn: (data: { username: string; email: string }) => userService.updateProfile(data),
+    onSuccess: (updatedUser) => {
+      // Mettre à jour le contexte d'authentification
+      updateUser(updatedUser);
+      // Invalider les requêtes utilisateur
+      queryClient.invalidateQueries({ queryKey: ['user'] });
+      // Mettre à jour l'état local immédiatement
+      setEditData({
+        username: updatedUser.username || '',
+        email: updatedUser.email || ''
+      });
+      toast.success('Profil mis à jour avec succès');
+      setIsEditing(false);
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.error || 'Erreur lors de la mise à jour du profil');
+    }
   });
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -61,14 +87,24 @@ const Profile: React.FC = () => {
 
   const handleEditToggle = () => {
     if (isEditing) {
-      // Save changes
+      // Sauvegarder les changements
+      updateProfileMutation.mutate(editData);
+    } else {
+      // Entrer en mode édition avec les données actuelles
       setEditData({
         username: user?.username || '',
         email: user?.email || ''
       });
-      toast.success('Profil mis à jour avec succès');
+      setIsEditing(true);
     }
-    setIsEditing(!isEditing);
+  };
+
+  const handleCancelEdit = () => {
+    setEditData({
+      username: user?.username || '',
+      email: user?.email || ''
+    });
+    setIsEditing(false);
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -144,15 +180,6 @@ const Profile: React.FC = () => {
 
                 <Button
                   variant="outlined"
-                  startIcon={<EditIcon />}
-                  onClick={handleEditToggle}
-                  sx={{ mb: 2 }}
-                >
-                  {isEditing ? 'Annuler' : 'Modifier le profil'}
-                </Button>
-
-                <Button
-                  variant="outlined"
                   color="error"
                   onClick={logout}
                   fullWidth
@@ -200,17 +227,12 @@ const Profile: React.FC = () => {
                         Nom d'utilisateur
                       </Typography>
                       {isEditing ? (
-                        <input
-                          type="text"
+                        <TextField
+                          fullWidth
                           value={editData.username}
                           onChange={(e) => handleInputChange('username', e.target.value)}
-                          style={{
-                            width: '100%',
-                            padding: '12px',
-                            border: '1px solid #ccc',
-                            borderRadius: '4px',
-                            fontSize: '16px'
-                          }}
+                          variant="outlined"
+                          size="small"
                         />
                       ) : (
                         <Typography variant="body1" sx={{ fontWeight: 500 }}>
@@ -224,17 +246,13 @@ const Profile: React.FC = () => {
                         Email
                       </Typography>
                       {isEditing ? (
-                        <input
-                          type="email"
+                        <TextField
+                          fullWidth
                           value={editData.email}
                           onChange={(e) => handleInputChange('email', e.target.value)}
-                          style={{
-                            width: '100%',
-                            padding: '12px',
-                            border: '1px solid #ccc',
-                            borderRadius: '4px',
-                            fontSize: '16px'
-                          }}
+                          variant="outlined"
+                          size="small"
+                          type="email"
                         />
                       ) : (
                         <Typography variant="body1" sx={{ fontWeight: 500 }}>
@@ -250,21 +268,29 @@ const Profile: React.FC = () => {
                         variant="contained"
                         startIcon={<SaveIcon />}
                         onClick={handleEditToggle}
+                        disabled={updateProfileMutation.isPending}
                       >
-                        Sauvegarder
+                        {updateProfileMutation.isPending ? 'Sauvegarde...' : 'Sauvegarder'}
                       </Button>
                       <Button
                         variant="outlined"
                         startIcon={<CancelIcon />}
-                        onClick={() => {
-                          setIsEditing(false);
-                          setEditData({
-                            username: user.username,
-                            email: user.email
-                          });
-                        }}
+                        onClick={handleCancelEdit}
+                        disabled={updateProfileMutation.isPending}
                       >
                         Annuler
+                      </Button>
+                    </Box>
+                  )}
+
+                  {!isEditing && (
+                    <Box sx={{ mt: 3 }}>
+                      <Button
+                        variant="outlined"
+                        startIcon={<EditIcon />}
+                        onClick={handleEditToggle}
+                      >
+                        Modifier le profil
                       </Button>
                     </Box>
                   )}

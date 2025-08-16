@@ -43,10 +43,11 @@ class ProductSerializer(serializers.ModelSerializer):
     category_id = serializers.PrimaryKeyRelatedField(queryset=ProductCategory.objects.all(), source='category', write_only=True)
     images = ImageSerializer(many=True, read_only=True)
     image_files = serializers.ListField(child=serializers.ImageField(), write_only=True, required=False, max_length=5)
+    existing_image_ids = serializers.ListField(child=serializers.IntegerField(), write_only=True, required=False)
 
     class Meta:
         model = Product
-        fields = ['id', 'name', 'description', 'price', 'category', 'category_id', 'images', 'image_files', 'stock', 'created_at']
+        fields = ['id', 'name', 'description', 'price', 'category', 'category_id', 'images', 'image_files', 'existing_image_ids', 'stock', 'created_at']
 
     def create(self, validated_data):
         image_files = validated_data.pop('image_files', [])
@@ -59,11 +60,24 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         image_files = validated_data.pop('image_files', [])
+        existing_image_ids = validated_data.pop('existing_image_ids', [])
+        
+        # Supprimer toutes les images existantes qui ne sont pas dans existing_image_ids
+        if existing_image_ids:
+            instance.images.remove(*instance.images.exclude(id__in=existing_image_ids))
+        else:
+            # Si aucune image existante n'est spécifiée, supprimer toutes les images
+            instance.images.clear()
+        
+        # Mettre à jour les autres champs
         instance = super().update(instance, validated_data)
+        
+        # Ajouter les nouvelles images
         for image_file in image_files:
             if instance.images.count() < 5:
                 image = Image.objects.create(image=image_file)
                 instance.images.add(image)
+        
         return instance
 
 class EquipmentSerializer(serializers.ModelSerializer):
@@ -71,10 +85,11 @@ class EquipmentSerializer(serializers.ModelSerializer):
     category_id = serializers.PrimaryKeyRelatedField(queryset=EquipmentCategory.objects.all(), source='category', write_only=True)
     images = ImageSerializer(many=True, read_only=True)
     image_files = serializers.ListField(child=serializers.ImageField(), write_only=True, required=False, max_length=5)
+    existing_image_ids = serializers.ListField(child=serializers.IntegerField(), write_only=True, required=False)
 
     class Meta:
         model = Equipment
-        fields = ['id', 'name', 'description', 'rental_price_per_day', 'category', 'category_id', 'images', 'image_files', 'available', 'created_at']
+        fields = ['id', 'name', 'description', 'rental_price_per_day', 'category', 'category_id', 'images', 'image_files', 'existing_image_ids', 'available', 'created_at']
 
     def create(self, validated_data):
         image_files = validated_data.pop('image_files', [])
@@ -87,11 +102,24 @@ class EquipmentSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         image_files = validated_data.pop('image_files', [])
+        existing_image_ids = validated_data.pop('existing_image_ids', [])
+        
+        # Supprimer toutes les images existantes qui ne sont pas dans existing_image_ids
+        if existing_image_ids:
+            instance.images.remove(*instance.images.exclude(id__in=existing_image_ids))
+        else:
+            # Si aucune image existante n'est spécifiée, supprimer toutes les images
+            instance.images.clear()
+        
+        # Mettre à jour les autres champs
         instance = super().update(instance, validated_data)
+        
+        # Ajouter les nouvelles images
         for image_file in image_files:
             if instance.images.count() < 5:
                 image = Image.objects.create(image=image_file)
                 instance.images.add(image)
+        
         return instance
 
 
@@ -145,3 +173,25 @@ class RegisterSerializer(serializers.ModelSerializer):
         validated_data.pop('password2')
         user = User.objects.create_user(**validated_data)
         return user
+
+class ReviewSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    rating_display = serializers.CharField(source='get_rating_display', read_only=True)
+    
+    class Meta:
+        model = Review
+        fields = ['id', 'user', 'name', 'email', 'company', 'rating', 'rating_display', 'comment', 'is_approved', 'created_at']
+        read_only_fields = ['user', 'is_approved', 'created_at']
+    
+    def create(self, validated_data):
+        # Si l'utilisateur est connecté, l'associer automatiquement
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            validated_data['user'] = request.user
+            validated_data['name'] = request.user.get_full_name() or request.user.username
+            validated_data['email'] = request.user.email
+        
+        # Approuver automatiquement les avis pour qu'ils s'affichent immédiatement
+        validated_data['is_approved'] = True
+        
+        return super().create(validated_data)

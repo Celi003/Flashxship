@@ -240,18 +240,35 @@ export const orderService = {
 
 // Services de contact
 export const contactService = {
-  sendMessage: async (name: string, email: string, subject: string, message: string): Promise<void> => {
-    await api.post('/contact/', { name, email, subject, message });
+  sendMessage: async (data: FormData): Promise<void> => {
+    await api.post('/contact/', data);
   },
-
+  
   getAll: async (): Promise<ContactMessage[]> => {
-    const response = await api.get('/api/admin/messages/');
+    const response = await api.get('/contact/');
     return response.data;
   },
-
+  
   respond: async (messageId: number, response: string): Promise<void> => {
-    await api.post(`/api/admin/messages/${messageId}/respond/`, { response });
+    await api.post(`/api/admin/messages/${messageId}/respond/`, { response: response });
   }
+};
+
+// Service utilisateur
+export const userService = {
+  updateProfile: async (data: { username: string; email: string }): Promise<any> => {
+    const response = await api.put('/auth/profile/', data);
+    return response.data;
+  }
+};
+
+// Review service
+export const reviewService = {
+  getAll: () => api.get('/reviews/all/').then((res: AxiosResponse<any>) => res.data), // Temporairement tous les avis
+  getApproved: () => api.get('/reviews/').then((res: AxiosResponse<any>) => res.data), // Seulement les approuvés
+  create: (data: any) => api.post('/reviews/create/', data).then((res: AxiosResponse<any>) => res.data),
+  approve: (id: number) => api.put(`/reviews/${id}/`).then((res: AxiosResponse<any>) => res.data),
+  delete: (id: number) => api.delete(`/reviews/${id}/`).then((res: AxiosResponse<any>) => res.data),
 };
 
 export default api; 

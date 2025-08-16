@@ -34,6 +34,8 @@ import { motion } from 'framer-motion';
 import { useCart } from '../contexts/CartContext';
 import { equipmentService, equipmentCategoryService } from '../services/api';
 import { Equipment as EquipmentType, EquipmentCategory } from '../types';
+import EquipmentCard from '../components/EquipmentCard';
+import ImageGallery from '../components/ImageGallery';
 import toast from 'react-hot-toast';
 
 const Equipment: React.FC = () => {
@@ -78,16 +80,22 @@ const Equipment: React.FC = () => {
     }).format(price);
   };
 
-  const handleRentEquipment = (equipment: EquipmentType) => {
-    setSelectedEquipment(equipment);
+  const handleRentEquipment = (equipmentId: number) => {
+    const selectedEq = equipment.find((eq: EquipmentType) => eq.id === equipmentId);
+    if (!selectedEq) return;
+    
+    setSelectedEquipment(selectedEq);
     setRentalDays(1);
     setStartDate('');
     setEndDate('');
     setOpenRentalDialog(true);
   };
 
-  const handleViewDetails = (equipment: EquipmentType) => {
-    setSelectedEquipment(equipment);
+  const handleViewDetails = (equipmentId: number) => {
+    const selectedEq = equipment.find((eq: EquipmentType) => eq.id === equipmentId);
+    if (!selectedEq) return;
+    
+    setSelectedEquipment(selectedEq);
     setOpenDetailsDialog(true);
   };
 
@@ -124,7 +132,7 @@ const Equipment: React.FC = () => {
   };
 
   const filteredEquipment = equipment.filter((item: EquipmentType) =>
-    selectedCategory === '' || item.category.id === selectedCategory
+    selectedCategory === '' || (item.category && item.category.id === selectedCategory)
   );
 
   const sortedEquipment = [...filteredEquipment].sort((a, b) => {
@@ -225,90 +233,18 @@ const Equipment: React.FC = () => {
         ) : (
           sortedEquipment.map((equipment, index) => (
             <Grid item xs={12} sm={6} md={4} key={equipment.id}>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-              >
-                <Card
-                  elevation={3}
-                  sx={{
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-4px)',
-                      boxShadow: theme.shadows[8]
-                    }
-                  }}
-                >
-                  <CardMedia
-                    component="img"
-                    height="200"
-                    image={equipment.images && equipment.images.length > 0
-                      ? (equipment.images[0].image_url || (equipment.images[0].image ? `http://localhost:8000${equipment.images[0].image}` : '/placeholders/placeholder-equipment.jpg'))
-                      : '/placeholders/placeholder-equipment.jpg'}
-                    alt={equipment.name}
-                    sx={{ objectFit: 'cover' }}
-                    decoding="async"
-                    onLoad={(e) => {
-                    }}
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/placeholders/placeholder-equipment.jpg';
-                    }}
-                  />
-
-                  <CardContent sx={{ flexGrow: 1 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-                      <Typography variant="h6" sx={{ fontWeight: 600, flex: 1 }}>
-                        {equipment.name}
-                      </Typography>
-                      <Chip
-                        label={equipment.available ? 'Disponible' : 'Indisponible'}
-                        color={equipment.available ? 'success' : 'error'}
-                        size="small"
-                      />
-                    </Box>
-
-                    {equipment.description && (
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                        {equipment.description.length > 100
-                          ? `${equipment.description.substring(0, 100)}...`
-                          : equipment.description}
-                      </Typography>
-                    )}
-
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                      <Typography variant="h6" color="primary" sx={{ fontWeight: 700 }}>
-                        {formatPrice(equipment.rental_price_per_day)}/jour
-                      </Typography>
-                      <Chip label={equipment.category.name} size="small" variant="outlined" />
-                    </Box>
-                  </CardContent>
-
-                  <CardActions sx={{ p: 2, pt: 0 }}>
-                    <Button
-                      variant="contained"
-                      fullWidth
-                      startIcon={<CalendarIcon />}
-                      onClick={() => handleRentEquipment(equipment)}
-                      disabled={!equipment.available}
-                      sx={{ mb: 1 }}
-                    >
-                      {equipment.available ? 'Louer' : 'Indisponible'}
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      fullWidth
-                      startIcon={<ViewIcon />}
-                      onClick={() => handleViewDetails(equipment)}
-                    >
-                      Voir détails
-                    </Button>
-                  </CardActions>
-                </Card>
-              </motion.div>
+              <EquipmentCard
+                key={equipment.id}
+                id={equipment.id}
+                name={equipment.name}
+                description={equipment.description || ''}
+                rental_price_per_day={equipment.rental_price_per_day}
+                images={equipment.images}
+                category={equipment.category.name}
+                available={equipment.available}
+                onRent={handleRentEquipment}
+                onViewDetails={handleViewDetails}
+              />
             </Grid>
           ))
         )}
@@ -419,23 +355,13 @@ const Equipment: React.FC = () => {
 
               {selectedEquipment.images && selectedEquipment.images.length > 0 && (
                 <Grid item xs={12}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
-                    Images
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                    {selectedEquipment.images.map((image, index) => (
-                      <Avatar
-                        key={index}
-                        src={image.image ? `http://localhost:8000${image.image}` : undefined}
-                        sx={{ width: 100, height: 100 }}
-                        variant="rounded"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = 'http://localhost:8000/media/images/placeholder-equipment.jpg';
-                        }}
-                      />
-                    ))}
-                  </Box>
+                  <ImageGallery 
+                    images={selectedEquipment.images}
+                    title="Images de l'équipement"
+                    maxHeight={150}
+                    showNavigation={true}
+                    showZoom={true}
+                  />
                 </Grid>
               )}
 

@@ -125,4 +125,17 @@ export interface ApiResponse<T> {
   data?: T;
   error?: string;
   message?: string;
+}
+
+export interface Review {
+  id: number;
+  user?: User;
+  name: string;
+  email: string;
+  company?: string;
+  rating: number;
+  rating_display: string;
+  comment: string;
+  is_approved: boolean;
+  created_at: string;
 } 

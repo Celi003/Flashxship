@@ -40,6 +40,8 @@ import jwt
 import uuid
 from datetime import timedelta
 from .models import RefreshToken
+from .serializers import ReviewSerializer
+from .models import Review
 
 # Configuration JWT
 JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'your-secret-key-change-in-production')
@@ -325,14 +327,25 @@ def cart(request):
         request.session.modified = True
         return Response({'message': 'Item added to cart'}, status=status.HTTP_200_OK)
 
-@api_view(['POST'])
+@api_view(['GET', 'POST'])
 @permission_classes([AllowAny])
 def contact(request):
-    serializer = ContactMessageSerializer(data=request.data)
-    if serializer.is_valid():
-        contact_message = serializer.save(user=request.user if request.user.is_authenticated else None)
-        return Response({'message': 'Message sent successfully'}, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    if request.method == 'GET':
+        # Récupérer tous les messages de contact (pour l'admin)
+        if request.user.is_authenticated and request.user.is_staff:
+            messages = ContactMessage.objects.all().order_by('-created_at')
+            serializer = ContactMessageSerializer(messages, many=True)
+            return Response(serializer.data)
+        else:
+            return Response({'error': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
+    
+    elif request.method == 'POST':
+        # Envoyer un nouveau message de contact
+        serializer = ContactMessageSerializer(data=request.data)
+        if serializer.is_valid():
+            contact_message = serializer.save(user=request.user if request.user.is_authenticated else None)
+            return Response({'message': 'Message sent successfully'}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAdminOrReadOnly])
@@ -795,6 +808,50 @@ def respond_to_message(request, message_id):
         return Response({'error': 'Message non trouvé'}, status=404) 
 
 @api_view(['GET'])
+def get_reviews(request):
+    """Récupérer tous les avis approuvés"""
+    reviews = Review.objects.filter(is_approved=True)
+    serializer = ReviewSerializer(reviews, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+def get_all_reviews(request):
+    """Récupérer tous les avis (approuvés et en attente) - pour le débogage"""
+    reviews = Review.objects.all().order_by('-created_at')
+    serializer = ReviewSerializer(reviews, many=True)
+    return Response(serializer.data)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def create_review(request):
+    """Créer un nouvel avis"""
+    serializer = ReviewSerializer(data=request.data, context={'request': request})
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['PUT', 'DELETE'])
+@permission_classes([IsAdminUser])
+def manage_review(request, review_id):
+    """Gérer un avis (approuver/supprimer) - Admin seulement"""
+    try:
+        review = Review.objects.get(id=review_id)
+    except Review.DoesNotExist:
+        return Response({'error': 'Avis non trouvé'}, status=status.HTTP_404_NOT_FOUND)
+    
+    if request.method == 'PUT':
+        # Approuver l'avis
+        review.is_approved = True
+        review.save()
+        serializer = ReviewSerializer(review)
+        return Response(serializer.data)
+    
+    elif request.method == 'DELETE':
+        review.delete()
+        return Response({'message': 'Avis supprimé'}, status=status.HTTP_204_NO_CONTENT)
+
+@api_view(['GET'])
 def get_user_info(request):
     """Obtenir les informations de l'utilisateur connecté"""
     user = verify_token(request)
@@ -802,3 +859,49 @@ def get_user_info(request):
         return Response({'error': 'Token invalide ou expiré'}, status=status.HTTP_401_UNAUTHORIZED)
     
     return Response(UserSerializer(user).data) 
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+@authentication_classes([JWTAuthentication])
+def update_profile(request):
+    """Mettre à jour le profil de l'utilisateur connecté"""
+    try:
+        user = request.user
+        
+        # Vérifier que l'utilisateur est connecté
+        if not user.is_authenticated:
+            return Response({'error': 'Utilisateur non connecté'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        # Récupérer les données de la requête
+        username = request.data.get('username')
+        email = request.data.get('email')
+        
+        # Validation des données
+        if not username or not email:
+            return Response({'error': 'Le nom d\'utilisateur et l\'email sont requis'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Vérifier si le nom d'utilisateur est déjà pris par un autre utilisateur
+        if User.objects.filter(username=username).exclude(id=user.id).exists():
+            return Response({'error': 'Ce nom d\'utilisateur est déjà pris'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Vérifier si l'email est déjà pris par un autre utilisateur
+        if User.objects.filter(email=email).exclude(id=user.id).exists():
+            return Response({'error': 'Cet email est déjà utilisé'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Mettre à jour l'utilisateur
+        user.username = username
+        user.email = email
+        user.save()
+        
+        # Retourner les données mises à jour
+        return Response({
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'date_joined': user.date_joined
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response({'error': f'Erreur lors de la mise à jour du profil: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR) 

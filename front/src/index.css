@@ -72,10 +72,81 @@ textarea {
   transition: all 0.3s ease-in-out;
 }
 
-/* Focus styles */
-*:focus {
+/* Focus styles - Supprimé pour éviter les liens carrés bleus */
+/* *:focus {
   outline: 2px solid #1976d2;
   outline-offset: 2px;
+} */
+
+/* Styles spécifiques pour les liens et boutons */
+a:focus,
+button:focus,
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none !important;
+}
+
+/* Styles spécifiques pour le logo et la navigation */
+.logo-link:focus {
+  outline: none !important;
+}
+
+.logo-link:focus-visible {
+  outline: none !important;
+}
+
+/* Amélioration des champs de saisie */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none !important;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+}
+
+/* Suppression des outlines par défaut sur les liens */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+a:focus {
+  outline: none !important;
+}
+
+/* Suppression complète des outlines bleus */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none !important;
+}
+
+/* Styles spécifiques pour Material-UI */
+.MuiInputBase-root:focus,
+.MuiInputBase-root:focus-within,
+.MuiTextField-root:focus,
+.MuiTextField-root:focus-within,
+.MuiFormControl-root:focus,
+.MuiFormControl-root:focus-within {
+  outline: none !important;
+}
+
+.MuiInputBase-input:focus,
+.MuiInputBase-input:focus-visible {
+  outline: none !important;
+}
+
+/* Suppression des outlines sur tous les éléments Material-UI */
+.MuiButton-root:focus,
+.MuiButton-root:focus-visible,
+.MuiIconButton-root:focus,
+.MuiIconButton-root:focus-visible,
+.MuiChip-root:focus,
+.MuiChip-root:focus-visible {
+  outline: none !important;
 }
 
 /* Loading animation */
@@ -191,4 +262,44 @@ h6 {
 
 .animate-slide-up {
   animation: slideUp 0.5s ease-out;
+}
+
+/* Styles pour assurer l'alignement uniforme des cartes */
+.MuiGrid-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.MuiGrid-item > * {
+  height: 100%;
+  width: 100%;
+}
+
+/* Correction du décalage des cartes */
+.product-card,
+.equipment-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Assurer que les images ont la même taille */
+.product-image,
+.equipment-image {
+  height: 240px !important;
+  width: 100%;
+  object-fit: cover;
+}
+
+/* Assurer que le contenu des cartes s'étend uniformément */
+.card-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Assurer que les boutons sont alignés en bas */
+.card-actions {
+  margin-top: auto;
+  padding-top: 16px;
 }

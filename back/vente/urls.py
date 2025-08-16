@@ -16,6 +16,7 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('refresh/', views.refresh_token_view, name='refresh_token'),
     path('user/', views.get_user_info, name='user_info'),
+    path('auth/profile/', views.update_profile, name='update_profile'),
     
     # Cart
     path('cart/', views.cart, name='cart'),
@@ -36,6 +37,12 @@ urlpatterns = [
     
     # Contact
     path('contact/', views.contact, name='contact'),
+    
+    # Reviews
+    path('reviews/', views.get_reviews, name='get_reviews'),
+    path('reviews/all/', views.get_all_reviews, name='get_all_reviews'),
+    path('reviews/create/', views.create_review, name='create_review'),
+    path('reviews/<int:review_id>/', views.manage_review, name='manage_review'),
     
     # Router URLs
     path('', include(router.urls)),

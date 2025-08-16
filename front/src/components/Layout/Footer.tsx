@@ -25,129 +25,117 @@ const Footer: React.FC = () => {
   return (
     <Box
       component="footer"
-      className="bg-gradient-to-br from-flashxship-dark-gray to-flashxship-black text-white"
       sx={{
         backgroundColor: theme.palette.grey[800],
         color: theme.palette.grey[100],
-        py: { xs: 4, md: 6 },
+        py: { xs: 3, md: 4 },
         mt: 'auto',
-        position: 'relative',
-        overflow: 'hidden'
+        position: 'relative'
       }}
     >
-      {/* Effet de background décoratif */}
-      <Box
-        sx={{
-          position: 'absolute',
-          top: 0,
-          right: 0,
-          width: '100%',
-          height: '100%',
-          background: 'linear-gradient(135deg, transparent 0%, rgba(211, 47, 47, 0.05) 100%)',
-          pointerEvents: 'none'
-        }}
-      />
-
-      <Container maxWidth="lg" className="relative z-10">
-        <Grid container spacing={{ xs: 4, md: 6 }}>
-          {/* Logo et description */}
-          <Grid item xs={12} md={4}>
-            <Box className="mb-4">
+      <Container maxWidth="lg">
+        <Grid container spacing={{ xs: 3, md: 4 }}>
+          {/* Logo et description - Colonne principale */}
+          <Grid item xs={12} md={5}>
+            <Box sx={{ mb: 2 }}>
               <Typography
-                variant="h4"
-                className="font-playfair font-bold text-white mb-3"
+                variant="h5"
                 sx={{
                   fontWeight: 700,
                   mb: 2,
                   fontFamily: '"Playfair Display", serif',
                   letterSpacing: '0.1em',
-                  fontSize: { xs: '1.5rem', md: '2rem' }
+                  fontSize: { xs: '1.4rem', md: '1.6rem' }
                 }}
               >
                 FLASHXSHIP
               </Typography>
               <Typography
                 variant="body2"
-                className="text-gray-300 leading-relaxed mb-4"
                 sx={{
-                  mb: 3,
-                  lineHeight: 1.6,
-                  color: theme.palette.grey[300]
+                  lineHeight: 1.5,
+                  color: theme.palette.grey[300],
+                  mb: 2,
+                  maxWidth: '280px'
                 }}
               >
-                Votre partenaire de confiance pour l'achat et la location d'équipements professionnels.
+                Votre partenaire de confiance pour l'achat et la location d'équipements professionnels. 
                 Qualité, fiabilité et service client au cœur de notre engagement.
               </Typography>
             </Box>
 
-            {/* Réseaux sociaux */}
-            <Box className="flex gap-2">
+            {/* Réseaux sociaux - Repositionnés sous la description */}
+            <Box sx={{ display: 'flex', gap: 1 }}>
               <IconButton
-                className="hover-lift text-gray-400 hover:text-white transition-all p-2"
+                size="small"
                 sx={{
                   color: theme.palette.grey[400],
                   '&:hover': {
                     color: theme.palette.common.white,
-                    transform: 'translateY(-2px)',
                     backgroundColor: 'rgba(255, 255, 255, 0.1)'
                   }
                 }}
               >
-                <FacebookIcon />
+                <FacebookIcon fontSize="small" />
               </IconButton>
               <IconButton
-                className="hover-lift text-gray-400 hover:text-white transition-all p-2"
+                size="small"
                 sx={{
                   color: theme.palette.grey[400],
                   '&:hover': {
                     color: theme.palette.common.white,
-                    transform: 'translateY(-2px)',
                     backgroundColor: 'rgba(255, 255, 255, 0.1)'
                   }
                 }}
               >
-                <TwitterIcon />
+                <TwitterIcon fontSize="small" />
               </IconButton>
               <IconButton
-                className="hover-lift text-gray-400 hover:text-white transition-all p-2"
+                size="small"
                 sx={{
                   color: theme.palette.grey[400],
                   '&:hover': {
                     color: theme.palette.common.white,
-                    transform: 'translateY(-2px)',
                     backgroundColor: 'rgba(255, 255, 255, 0.1)'
                   }
                 }}
               >
-                <InstagramIcon />
+                <InstagramIcon fontSize="small" />
               </IconButton>
               <IconButton
-                className="hover-lift text-gray-400 hover:text-white transition-all p-2"
+                size="small"
                 sx={{
                   color: theme.palette.grey[400],
                   '&:hover': {
                     color: theme.palette.common.white,
-                    transform: 'translateY(-2px)',
                     backgroundColor: 'rgba(255, 255, 255, 0.1)'
                   }
                 }}
               >
-                <LinkedInIcon />
+                <LinkedInIcon fontSize="small" />
               </IconButton>
             </Box>
           </Grid>
 
-          {/* Services */}
-          <Grid item xs={12} sm={6} md={2}>
-            <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
+          {/* Services - Colonne compacte */}
+          <Grid item xs={6} md={2}>
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                mb: 2, 
+                fontWeight: 600,
+                fontSize: { xs: '0.9rem', md: '1rem' }
+              }}
+            >
               Services
             </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
               <Link
                 href="/products"
                 color="inherit"
                 sx={{
                   textDecoration: 'none',
+                  fontSize: '0.85rem',
                   '&:hover': { color: theme.palette.common.white }
                 }}
               >
@@ -158,6 +146,7 @@ const Footer: React.FC = () => {
                 color="inherit"
                 sx={{
                   textDecoration: 'none',
+                  fontSize: '0.85rem',
                   '&:hover': { color: theme.palette.common.white }
                 }}
               >
@@ -168,6 +157,7 @@ const Footer: React.FC = () => {
                 color="inherit"
                 sx={{
                   textDecoration: 'none',
+                  fontSize: '0.85rem',
                   '&:hover': { color: theme.palette.common.white }
                 }}
               >
@@ -178,6 +168,7 @@ const Footer: React.FC = () => {
                 color="inherit"
                 sx={{
                   textDecoration: 'none',
+                  fontSize: '0.85rem',
                   '&:hover': { color: theme.palette.common.white }
                 }}
               >
@@ -186,27 +177,25 @@ const Footer: React.FC = () => {
             </Box>
           </Grid>
 
-          {/* Support */}
-          <Grid item xs={12} sm={6} md={2}>
-            <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
+          {/* Support - Colonne compacte */}
+          <Grid item xs={6} md={2}>
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                mb: 2, 
+                fontWeight: 600,
+                fontSize: { xs: '0.9rem', md: '1rem' }
+              }}
+            >
               Support
             </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
               <Link
                 href="/contact"
                 color="inherit"
                 sx={{
                   textDecoration: 'none',
-                  '&:hover': { color: theme.palette.common.white }
-                }}
-              >
-                Contact
-              </Link>
-              <Link
-                href="/contact"
-                color="inherit"
-                sx={{
-                  textDecoration: 'none',
+                  fontSize: '0.85rem',
                   '&:hover': { color: theme.palette.common.white }
                 }}
               >
@@ -217,6 +206,7 @@ const Footer: React.FC = () => {
                 color="inherit"
                 sx={{
                   textDecoration: 'none',
+                  fontSize: '0.85rem',
                   '&:hover': { color: theme.palette.common.white }
                 }}
               >
@@ -227,35 +217,54 @@ const Footer: React.FC = () => {
                 color="inherit"
                 sx={{
                   textDecoration: 'none',
+                  fontSize: '0.85rem',
                   '&:hover': { color: theme.palette.common.white }
                 }}
               >
                 Garantie
               </Link>
+              <Link
+                href="/contact"
+                color="inherit"
+                sx={{
+                  textDecoration: 'none',
+                  fontSize: '0.85rem',
+                  '&:hover': { color: theme.palette.common.white }
+                }}
+              >
+                Contact
+              </Link>
             </Box>
           </Grid>
 
-          {/* Contact */}
-          <Grid item xs={12} md={4}>
-            <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
+          {/* Contact - Colonne compacte */}
+          <Grid item xs={12} md={3}>
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                mb: 2, 
+                fontWeight: 600,
+                fontSize: { xs: '0.9rem', md: '1rem' }
+              }}
+            >
               Contact
             </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <EmailIcon sx={{ color: theme.palette.grey[400] }} />
-                <Typography variant="body2">
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <EmailIcon sx={{ color: theme.palette.grey[400], fontSize: '1.1rem' }} />
+                <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>
                   contact@flashxship.co
                 </Typography>
               </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <PhoneIcon sx={{ color: theme.palette.grey[400] }} />
-                <Typography variant="body2">
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <PhoneIcon sx={{ color: theme.palette.grey[400], fontSize: '1.1rem' }} />
+                <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>
                   +33 1 23 45 67 89
                 </Typography>
               </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <LocationIcon sx={{ color: theme.palette.grey[400] }} />
-                <Typography variant="body2">
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+                <LocationIcon sx={{ color: theme.palette.grey[400], fontSize: '1.1rem', mt: 0.1 }} />
+                <Typography variant="body2" sx={{ fontSize: '0.85rem', lineHeight: 1.3 }}>
                   123 Rue de la Technologie<br />
                   75001 Paris, France
                 </Typography>
@@ -264,14 +273,14 @@ const Footer: React.FC = () => {
           </Grid>
         </Grid>
 
-        {/* Copyright */}
+        {/* Copyright - Séparateur plus fin */}
         <Box sx={{
           borderTop: `1px solid ${theme.palette.grey[700]}`,
-          mt: 4,
-          pt: 3,
+          mt: 3,
+          pt: 2,
           textAlign: 'center'
         }}>
-          <Typography variant="body2" color="grey.400">
+          <Typography variant="body2" color="grey.400" sx={{ fontSize: '0.8rem' }}>
             © {new Date().getFullYear()} FLASHXSHIP. Tous droits réservés.
           </Typography>
         </Box>

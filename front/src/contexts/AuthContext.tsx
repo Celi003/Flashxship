@@ -9,6 +9,7 @@ interface AuthContextType {
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
   refreshAccessToken: () => Promise<boolean>;
+  updateUser: (userData: User) => void;
   isAuthenticated: boolean;
   loading: boolean;
 }
@@ -129,6 +130,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const updateUser = (userData: User) => {
+    setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
+  };
+
   const value: AuthContextType = {
     user,
     accessToken,
@@ -136,6 +142,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     logout,
     refreshAccessToken,
+    updateUser,
     isAuthenticated: !!user && !!accessToken,
     loading
   };

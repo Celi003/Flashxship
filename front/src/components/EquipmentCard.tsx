@@ -11,39 +11,37 @@ import {
     useTheme
 } from '@mui/material';
 import {
-    ShoppingCart as CartIcon,
+    CalendarToday as CalendarIcon,
     Favorite as FavoriteIcon,
     FavoriteBorder as FavoriteBorderIcon,
     Visibility as ViewIcon
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 
-interface ProductCardProps {
+interface EquipmentCardProps {
     id: number;
     name: string;
     description: string;
-    price: number;
-    image: string;
+    rental_price_per_day: number;
     images?: Array<{ id: number; image: string; image_url?: string }>;
     category: string;
-    isAvailable: boolean;
+    available: boolean;
     isFavorite?: boolean;
-    onAddToCart?: (id: number) => void;
+    onRent?: (id: number) => void;
     onToggleFavorite?: (id: number) => void;
     onViewDetails?: (id: number) => void;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({
+const EquipmentCard: React.FC<EquipmentCardProps> = ({
     id,
     name,
     description,
-    price,
-    image,
+    rental_price_per_day,
     images,
     category,
-    isAvailable,
+    available,
     isFavorite = false,
-    onAddToCart,
+    onRent,
     onToggleFavorite,
     onViewDetails
 }) => {
@@ -51,8 +49,16 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
     // Déterminer l'image à afficher
     const displayImage = images && images.length > 0 
-        ? (images[0].image_url || (images[0].image ? `http://localhost:8000${images[0].image}` : '/placeholders/placeholder-product.jpg'))
-        : (image || '/placeholders/placeholder-product.jpg');
+        ? (images[0].image_url || (images[0].image ? `http://localhost:8000${images[0].image}` : '/placeholders/placeholder-equipment.jpg'))
+        : '/placeholders/placeholder-equipment.jpg';
+
+    const formatPrice = (price: number) => {
+        return new Intl.NumberFormat('fr-FR', {
+            style: 'currency',
+            currency: 'EUR',
+            minimumFractionDigits: 0
+        }).format(price);
+    };
 
     return (
         <motion.div
@@ -62,7 +68,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
             whileHover={{ y: -8 }}
         >
             <Card
-                className="product-card"
+                className="equipment-card"
                 sx={{
                     height: '100%',
                     display: 'flex',
@@ -74,10 +80,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
                     minHeight: '500px', // Hauteur minimale fixe
                     '&:hover': {
                         boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15)',
-                        '& .product-image': {
+                        '& .equipment-image': {
                             transform: 'scale(1.05)'
                         },
-                        '& .product-actions': {
+                        '& .equipment-actions': {
                             opacity: 1,
                             transform: 'translateY(0)'
                         }
@@ -88,7 +94,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
                 <Box sx={{ position: 'relative', overflow: 'hidden' }}>
                     <CardMedia
                         component="img"
-                        className="product-image"
+                        className="equipment-image"
                         sx={{
                             height: 240,
                             objectFit: 'cover',
@@ -97,13 +103,13 @@ const ProductCard: React.FC<ProductCardProps> = ({
                         image={displayImage}
                         alt={name}
                         onError={(e) => {
-                            (e.target as HTMLImageElement).src = '/placeholders/placeholder-product.jpg';
+                            (e.target as HTMLImageElement).src = '/placeholders/placeholder-equipment.jpg';
                         }}
                     />
 
                     {/* Overlay Actions */}
                     <Box
-                        className="product-actions"
+                        className="equipment-actions"
                         sx={{
                             position: 'absolute',
                             top: 0,
@@ -158,13 +164,13 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
                     {/* Availability Badge */}
                     <Chip
-                        label={isAvailable ? 'Disponible' : 'Rupture'}
+                        label={available ? 'Disponible' : 'Indisponible'}
                         size="small"
                         sx={{
                             position: 'absolute',
                             top: 12,
                             right: 12,
-                            backgroundColor: isAvailable ? 'success.main' : 'error.main',
+                            backgroundColor: available ? 'success.main' : 'error.main',
                             color: 'white',
                             fontWeight: 600,
                             fontSize: '0.75rem'
@@ -216,18 +222,15 @@ const ProductCard: React.FC<ProductCardProps> = ({
                                 fontSize: '1.25rem'
                             }}
                         >
-                            {new Intl.NumberFormat('fr-FR', {
-                                style: 'currency',
-                                currency: 'EUR'
-                            }).format(price)}
+                            {formatPrice(rental_price_per_day)}/jour
                         </Typography>
 
                         <Button
                             variant="contained"
                             size="small"
-                            startIcon={<CartIcon />}
-                            disabled={!isAvailable}
-                            onClick={() => onAddToCart?.(id)}
+                            startIcon={<CalendarIcon />}
+                            disabled={!available}
+                            onClick={() => onRent?.(id)}
                             sx={{
                                 borderRadius: '8px',
                                 fontWeight: 600,
@@ -235,11 +238,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
                                 py: 1,
                                 '&:hover': {
                                     transform: 'translateY(-2px)',
-                                    boxShadow: '0 8px 20px rgba(0, 0, 0, 0.2)'
+                                    boxShadow: '0 8px 20px rgba(0,0,0,0.2)'
                                 }
                             }}
                         >
-                            Ajouter
+                            {available ? 'Louer' : 'Indisponible'}
                         </Button>
                     </Box>
                 </CardContent>
@@ -248,4 +251,4 @@ const ProductCard: React.FC<ProductCardProps> = ({
     );
 };
 
-export default ProductCard;
+export default EquipmentCard;
