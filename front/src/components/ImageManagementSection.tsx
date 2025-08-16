@@ -51,7 +51,7 @@ const ImageManagementSection: React.FC<ImageManagementSectionProps> = ({
   };
 
   const getImageUrl = (image: { image: string; image_url?: string }) => {
-    return image.image_url || (image.image ? `http://localhost:8000${image.image}` : '/placeholders/placeholder-product.jpg');
+    return image.image_url || (image.image ? `https://flashxship.onrender.com${image.image}` : '/placeholders/placeholder-product.jpg');
   };
 
   return (

@@ -38,7 +38,7 @@ const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
               <Grid item key={image.id}>
                 <Box sx={{ position: 'relative' }}>
                   <img
-                    src={image.image_url || (image.image ? `http://localhost:8000${image.image}` : placeholder)}
+                    src={image.image_url || (image.image ? `https://flashxship.onrender.com${image.image}` : placeholder)}
                     alt="Image existante"
                     style={{
                       width: 80,

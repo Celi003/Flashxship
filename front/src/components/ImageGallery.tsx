@@ -66,7 +66,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
 
   const currentImage = images[currentIndex];
   const displayImage = currentImage.image_url || 
-    (currentImage.image ? `http://localhost:8000${currentImage.image}` : '/placeholders/placeholder-equipment.jpg');
+    (currentImage.image ? `https://flashxship.onrender.com${currentImage.image}` : '/placeholders/placeholder-equipment.jpg');
 
   return (
     <Box sx={{ width: '100%' }}>
@@ -199,7 +199,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
         <Grid container spacing={1} sx={{ mt: 1 }}>
           {images.map((image, index) => {
             const thumbImage = image.image_url || 
-              (image.image ? `http://localhost:8000${image.image}` : '/placeholders/placeholder-equipment.jpg');
+              (image.image ? `https://flashxship.onrender.com${image.image}` : '/placeholders/placeholder-equipment.jpg');
             
             return (
               <Grid item key={image.id}>

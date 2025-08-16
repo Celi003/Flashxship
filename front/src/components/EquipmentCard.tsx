@@ -49,7 +49,7 @@ const EquipmentCard: React.FC<EquipmentCardProps> = ({
 
     // Déterminer l'image à afficher
     const displayImage = images && images.length > 0 
-        ? (images[0].image_url || (images[0].image ? `http://localhost:8000${images[0].image}` : '/placeholders/placeholder-equipment.jpg'))
+        ? (images[0].image_url || (images[0].image ? `https://flashxship.onrender.com${images[0].image}` : '/placeholders/placeholder-equipment.jpg'))
         : '/placeholders/placeholder-equipment.jpg';
 
     const formatPrice = (price: number) => {

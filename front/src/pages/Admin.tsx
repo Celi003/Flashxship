@@ -938,7 +938,7 @@ const Admin: React.FC = () => {
                   {product.images && product.images.length > 0 ? (
                     <Box sx={{ mb: 2, textAlign: 'center' }}>
                       <img
-                        src={product.images[0].image_url || `http://localhost:8000${product.images[0].image}`}
+                        src={product.images[0].image_url || `https://flashxship.onrender.com${product.images[0].image}`}
                         alt={product.name}
                         style={{
                           width: '100%',
@@ -1029,7 +1029,7 @@ const Admin: React.FC = () => {
                   {equip.images && equip.images.length > 0 ? (
                     <Box sx={{ mb: 2, textAlign: 'center' }}>
                       <img
-                        src={equip.images[0].image_url || `http://localhost:8000${equip.images[0].image}`}
+                        src={equip.images[0].image_url || `https://flashxship.onrender.com${equip.images[0].image}`}
                         alt={equip.name}
                         style={{
                           width: '100%',

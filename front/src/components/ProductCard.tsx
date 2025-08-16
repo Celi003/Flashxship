@@ -51,7 +51,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
     // Déterminer l'image à afficher
     const displayImage = images && images.length > 0 
-        ? (images[0].image_url || (images[0].image ? `http://localhost:8000${images[0].image}` : '/placeholders/placeholder-product.jpg'))
+        ? (images[0].image_url || (images[0].image ? `https://flashxship.onrender.com${images[0].image}` : '/placeholders/placeholder-product.jpg'))
         : (image || '/placeholders/placeholder-product.jpg');
 
     return (
