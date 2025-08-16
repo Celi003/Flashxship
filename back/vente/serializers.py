@@ -22,10 +22,10 @@ class ImageSerializer(serializers.ModelSerializer):
                 if request:
                     return request.build_absolute_uri(obj.image.url)
                 # Fallback: construire l'URL manuellement
-                return f"http://localhost:8000{obj.image.url}"
+                return f"https://flashxship.onrender.com{obj.image.url}"
             except Exception as e:
         
-                return f"http://localhost:8000{obj.image.url}"
+                return f"https://flashxship.onrender.com{obj.image.url}"
         return None
 
 class ProductCategorySerializer(serializers.ModelSerializer):
