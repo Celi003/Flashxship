@@ -187,7 +187,7 @@ STRIPE_WEBHOOK_SECRET = "whsec_fAPxNytmE0GIL3yCJFIrvCRiwO1um4Jk"
 # STRIPE_WEBHOOK_SECRET = "whsec_AGbGFaalEFYDaFtTfZOhEtK2jWHQtwdy"# À configurer dans le dashboard Stripe
 
 # Frontend URL
-FRONTEND_URL = "http://localhost:3000"
+FRONTEND_URL = "flashxship.vercel.app"
 
 # Email Configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
